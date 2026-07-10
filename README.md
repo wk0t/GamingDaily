@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🎮 Gaming Daily
+#  Gaming Daily
 
 **Ton magazine quotidien 100 % jeu vidéo — actu, consoles, PC, modding & rétro, esport.**
 
@@ -20,7 +20,7 @@ publicité, traduites de l'anglais si besoin, et lisibles **intégralement dans 
 
 ---
 
-## ✨ Fonctionnalités
+##  Fonctionnalités
 
 - **29 sources jeu vidéo** (FR + EN) : jeuxvideo.com, Gamekult, Gameblog, NoFrag, IGN, GameSpot, Eurogamer, Polygon, PC Gamer, Push Square, Nintendo Life, Wololo, RetroRGB… ainsi que les blogs officiels PlayStation et Xbox.
 - **Lecture intégrée, sans pub** : l'article complet est extrait et remis en forme (titres, paragraphes, images), sans quitter l'appli ni subir les bandeaux publicitaires.
@@ -31,7 +31,7 @@ publicité, traduites de l'anglais si besoin, et lisibles **intégralement dans 
 - **Bonus** : glossaire gaming au toucher, quiz du jour, résumé express (TL;DR), mode podcast, synthèse vocale, archives des 7 derniers jours, thème clair/sombre.
 - **Mise à jour automatique** : l'appli vous prévient quand une nouvelle version est publiée (voir plus bas).
 
-## 📦 Installation
+##  Installation
 
 Les binaires prêts à l'emploi sont disponibles sur la **[page des Releases](https://github.com/wk0t/GamingDaily/releases/latest)**.
 
@@ -62,7 +62,7 @@ iOS n'autorise pas l'installation directe d'un `.ipa` comme Android. `GamingDail
 
 > L'app n'est **pas** sur l'App Store. Le `.ipa` est compilé automatiquement par la CI, mais n'est pas testé sur un appareil réel.
 
-## 🔄 Mise à jour automatique
+##  Mise à jour automatique
 
 L'application interroge l'API des **GitHub Releases** de ce dépôt et compare son numéro de version
 au dernier tag publié. Dès qu'une version plus récente existe, une bannière **« Mettre à jour »**
@@ -116,12 +116,12 @@ xcodebuild -project GamingDaily.xcodeproj -scheme GamingDaily -configuration Rel
 
 Les deux réutilisent **la même interface web** (`android/assets/index.html`), copiée au moment du build.
 
-> **⚠️ Clé de signature.** Au premier build, un keystore `android/gamingdaily.jks` est généré
+> ** /!\ Clé de signature.** Au premier build, un keystore `android/gamingdaily.jks` est généré
 > automatiquement. **Conservez-le précieusement** : Android exige que toutes les mises à jour d'une
 > appli soient signées avec la **même** clé. Ce fichier est volontairement exclu du dépôt
 > (voir `.gitignore`) et ne doit jamais être publié.
 
-## 🧩 Architecture
+##  Architecture
 
 ```
 GamingDaily/
@@ -152,14 +152,14 @@ GamingDaily/
   réseau sans restriction CORS, synthèse vocale, partage et mises à jour.
 - La logique de lecture (favoris, glossaire, quiz, podcast…) est partagée à l'identique partout.
 
-## 🔒 Vie privée
+##  Vie privée
 
 Gaming Daily ne collecte rien et n'a pas de serveur. Vos favoris, votre historique et vos réglages
 restent stockés **localement** (localStorage sur PC, stockage de l'appli sur Android). Les seules
 connexions sortantes sont : les flux RSS des médias, le service de traduction gratuit de Google pour
 les articles anglais, et l'API des releases de ce dépôt pour la vérification des mises à jour.
 
-## 📰 Sources
+##  Sources
 
 Gaming Daily agrège les flux RSS **publics** des médias suivants (liste non exhaustive) :
 jeuxvideo.com, Gamekult, ActuGaming, Gameblog, JVFrance, IndieMag, NoFrag, PlayStation Blog,
@@ -170,7 +170,7 @@ Pure Xbox, Wololo, Time Extension, RetroRGB.
 Chaque article conserve un lien vers sa **source d'origine**. Tout le contenu (textes, images, marques)
 appartient à ses ayants droit respectifs. Ce projet est un lecteur personnel, non affilié à ces médias.
 
-## 📄 Licence
+##  Licence
 
 Code sous licence **[MIT](LICENSE)**. Le contenu des articles n'est pas couvert par cette licence.
 
