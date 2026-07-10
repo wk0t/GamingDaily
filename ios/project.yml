@@ -1,0 +1,28 @@
+# Projet généré par XcodeGen (pas de .xcodeproj versionné) :
+#   brew install xcodegen && xcodegen generate
+name: GamingDaily
+options:
+  bundleIdPrefix: com.wk0t
+  deploymentTarget:
+    iOS: "14.0"
+  createIntermediateGroups: true
+targets:
+  GamingDaily:
+    type: application
+    platform: iOS
+    sources:
+      - path: GamingDaily
+        excludes:
+          - "Info.plist"
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.wk0t.gamingdaily
+        PRODUCT_NAME: GamingDaily
+        MARKETING_VERSION: "1.0.0"
+        CURRENT_PROJECT_VERSION: "1"
+        TARGETED_DEVICE_FAMILY: "1,2"
+        GENERATE_INFOPLIST_FILE: NO
+        INFOPLIST_FILE: GamingDaily/Info.plist
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        SWIFT_VERSION: "5.0"
+        IPHONEOS_DEPLOYMENT_TARGET: "14.0"

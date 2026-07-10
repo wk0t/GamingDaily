@@ -2,6 +2,21 @@
 *.exe
 *.apk
 *.apk.idsig
+*.AppImage
+*.ipa
+
+# --- App Linux (Electron) : dépendances et sorties de build ---
+linux/node_modules/
+linux/dist/
+# renderer/ est généré depuis android/assets/index.html par copy-web.js
+linux/renderer/
+
+# --- App iOS : projet Xcode généré (xcodegen) et sorties de build ---
+ios/GamingDaily.xcodeproj/
+ios/build/
+ios/Payload/
+# index.html est copié depuis android/assets/index.html par la CI
+ios/GamingDaily/index.html
 
 # --- Clés de signature : NE JAMAIS committer ---
 # Perdre ou exposer cette clé compromet la signature des mises à jour.

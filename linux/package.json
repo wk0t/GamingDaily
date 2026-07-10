@@ -1,0 +1,40 @@
+{
+  "name": "gaming-daily",
+  "productName": "Gaming Daily",
+  "version": "1.0.0",
+  "description": "Magazine quotidien 100 % jeu vidéo — actu, consoles, PC, modding & rétro, esport.",
+  "author": "wk0t",
+  "license": "MIT",
+  "main": "main.js",
+  "scripts": {
+    "copy-web": "node copy-web.js",
+    "start": "npm run copy-web && electron .",
+    "dist": "npm run copy-web && electron-builder --linux AppImage"
+  },
+  "build": {
+    "appId": "com.wk0t.gamingdaily",
+    "productName": "Gaming Daily",
+    "artifactName": "GamingDaily-${arch}.AppImage",
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer/**/*"
+    ],
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "News",
+      "icon": "build/icon.png",
+      "synopsis": "Ton actu jeu vidéo quotidienne",
+      "desktop": {
+        "Name": "Gaming Daily",
+        "Comment": "Magazine quotidien jeu vidéo"
+      }
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  }
+}

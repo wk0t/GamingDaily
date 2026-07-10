@@ -1,0 +1,100 @@
+name: Build Linux & iOS
+
+# Construit l'AppImage (Linux) et l'IPA non signé (iOS), et les attache à la release.
+# - Manuel : onglet Actions -> "Run workflow" (tag par défaut v1.0.0)
+# - Automatique : à chaque nouvelle release publiée
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de release où déposer les binaires"
+        required: true
+        default: "v1.0.0"
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  linux:
+    name: Linux AppImage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Build AppImage
+        working-directory: linux
+        run: |
+          npm install
+          npm run dist
+
+      - name: Collect artifact
+        run: |
+          mkdir -p out
+          cp linux/dist/*.AppImage out/
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GamingDaily-Linux-AppImage
+          path: out/*.AppImage
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+        run: gh release upload "$TAG" out/*.AppImage --clobber --repo "${{ github.repository }}"
+
+  ios:
+    name: iOS IPA (non signé)
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Bundle web UI
+        run: cp android/assets/index.html ios/GamingDaily/index.html
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Build (unsigned)
+        working-directory: ios
+        run: |
+          xcodebuild \
+            -project GamingDaily.xcodeproj \
+            -scheme GamingDaily \
+            -configuration Release \
+            -sdk iphoneos \
+            -derivedDataPath build \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            build
+
+      - name: Package .ipa
+        working-directory: ios
+        run: |
+          APP="build/Build/Products/Release-iphoneos/GamingDaily.app"
+          if [ ! -d "$APP" ]; then echo "Build introuvable"; ls -R build/Build/Products || true; exit 1; fi
+          mkdir -p Payload
+          cp -R "$APP" Payload/GamingDaily.app
+          zip -qr GamingDaily-unsigned.ipa Payload
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: GamingDaily-iOS-IPA-unsigned
+          path: ios/GamingDaily-unsigned.ipa
+
+      - name: Upload to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+        run: gh release upload "$TAG" ios/GamingDaily-unsigned.ipa --clobber --repo "${{ github.repository }}"
