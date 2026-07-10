@@ -1,9 +1,16 @@
 name: Build Linux & iOS
 
 # Construit l'AppImage (Linux) et l'IPA non signé (iOS), et les attache à la release.
-# - Manuel : onglet Actions -> "Run workflow" (tag par défaut v1.0.0)
-# - Automatique : à chaque nouvelle release publiée
+# - Automatique : quand le code d'une app change sur main, ou à chaque release publiée
+# - Manuel : onglet Actions -> "Run workflow"
 on:
+  push:
+    branches: [main]
+    paths:
+      - "linux/**"
+      - "ios/**"
+      - ".github/workflows/build.yml"
+      - "android/assets/index.html"
   workflow_dispatch:
     inputs:
       tag:
@@ -46,7 +53,7 @@ jobs:
       - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag || 'v1.0.0' }}
         run: gh release upload "$TAG" out/*.AppImage --clobber --repo "${{ github.repository }}"
 
   ios:
@@ -96,5 +103,5 @@ jobs:
       - name: Upload to release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag }}
+          TAG: ${{ github.event.release.tag_name || github.event.inputs.tag || 'v1.0.0' }}
         run: gh release upload "$TAG" ios/GamingDaily-unsigned.ipa --clobber --repo "${{ github.repository }}"
