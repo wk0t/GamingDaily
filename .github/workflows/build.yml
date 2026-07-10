@@ -58,7 +58,8 @@ jobs:
 
   ios:
     name: iOS IPA (non signé)
-    runs-on: macos-14
+    # macOS 15 embarque Xcode 16, compatible avec le format de projet généré par XcodeGen.
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -77,7 +78,7 @@ jobs:
         run: |
           xcodebuild \
             -project GamingDaily.xcodeproj \
-            -scheme GamingDaily \
+            -target GamingDaily \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
