@@ -1,0 +1,14 @@
+# Normalisation git par défaut (les règles plus spécifiques ci-dessous priment).
+*      text=auto
+
+# Fichiers sensibles à l'encodage : stockés tels quels, sans conversion de fins
+# de ligne, pour préserver leurs octets (le moteur PowerShell DOIT rester en
+# UTF-8 avec BOM ; l'index.html contient des accents).
+*.ps1  -text
+*.html -text
+
+# Binaires : jamais de conversion.
+*.png  binary
+*.jks  binary
+*.apk  binary
+*.exe  binary

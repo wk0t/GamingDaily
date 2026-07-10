@@ -1,0 +1,23 @@
+# --- Binaires compilés (distribués via les GitHub Releases, pas dans le dépôt) ---
+*.exe
+*.apk
+*.apk.idsig
+
+# --- Clés de signature : NE JAMAIS committer ---
+# Perdre ou exposer cette clé compromet la signature des mises à jour.
+*.jks
+*.keystore
+
+# --- Artefacts de build Android (regénérés par build_apk.ps1) ---
+android/build/
+
+# --- Sorties temporaires ---
+*_magazine.html
+*_run.ps1
+*.tmp
+
+# --- Divers OS / éditeurs ---
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
