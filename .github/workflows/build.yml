@@ -78,7 +78,7 @@ jobs:
         run: |
           xcodebuild \
             -project GamingDaily.xcodeproj \
-            -target GamingDaily \
+            -scheme GamingDaily \
             -configuration Release \
             -sdk iphoneos \
             -derivedDataPath build \
