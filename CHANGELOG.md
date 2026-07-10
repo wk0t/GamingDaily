@@ -7,7 +7,8 @@ et le projet suit le [versionnage sémantique](https://semver.org/lang/fr/).
 
 ### Ajouté
 - Première version publique du magazine quotidien 100 % jeu vidéo.
-- Deux applications à partir de la même logique de lecture : exécutable Windows (`.exe`) et application Android (`.apk`).
+- Quatre plateformes à partir de la même logique de lecture : Windows (`.exe`), Android (`.apk`), Linux (`.AppImage`, app Electron) et iOS (`.ipa` non signé, app WKWebView pour le sideload).
+- Build automatique des versions Linux et iOS via GitHub Actions (runners Ubuntu et macOS), déposées sur la release.
 - 29 sources RSS (13 francophones, 16 anglophones) : actu, consoles, PC, modding/rétro et homebrew.
 - Traduction automatique des articles anglais vers le français.
 - Lecture intégrée sans publicité (contenu extrait et nettoyé), avec image de couverture.
