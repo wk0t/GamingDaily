@@ -1,67 +1,67 @@
 # Gaming Daily
 
-Un magazine quotidien 100 % jeu vidéo : actu, consoles, PC, modding et rétro, esport. Sur Windows, Android, Linux et iPhone.
+A daily 100% video-game magazine: news, consoles, PC, modding & retro, esports. On Windows, Android, Linux and iPhone.
 
-L'appli va chercher les articles chez 29 médias (français et anglais) via leurs flux RSS publics, enlève les pubs, traduit l'anglais en français et affiche chaque article en entier, directement dans l'appli. Pas de compte, pas de pub, pas de serveur.
+The app pulls articles from 29 outlets (French and English) through their public RSS feeds, strips ads, translates non-English stories to English, and shows each article in full, right inside the app. No account, no ads, no server.
 
-![Gaming Daily, thème sombre](docs/screenshot.png)
+![Gaming Daily, dark theme](docs/screenshot.png)
 
-Thème clair : [docs/screenshot-light.png](docs/screenshot-light.png). Les captures utilisent des articles d'exemple.
+Light theme: [docs/screenshot-light.png](docs/screenshot-light.png). The screenshots use sample articles.
 
-## Fonctionnalités
+## Features
 
-- Lecture intégrée : l'article complet est extrait de sa page d'origine et remis en forme, avec un lien vers la source.
-- Traduction automatique des sources anglophones.
-- Cinq rubriques : Actu, Consoles, PC, Modding et rétro, Esport.
-- Recherche, favoris disponibles hors ligne, articles lus grisés, temps de lecture estimé.
-- Sujets suivis : les articles concernés remontent en haut et sont surlignés.
-- Regroupement des doublons entre médias.
-- Hype du jour : repère les grosses annonces (Nintendo Direct, State of Play, rachats, reports, leaks).
-- Résumé en quelques lignes en tête d'article, glossaire au toucher, quiz du jour.
-- Mode podcast et lecture à voix haute.
-- Archives des 7 derniers jours, thème clair et sombre.
-- Mise à jour signalée par une bannière quand une nouvelle version sort.
+- Built-in reader: the full article is extracted from its original page and reformatted, with a link back to the source.
+- Automatic translation of non-English sources to English.
+- Five categories: News, Consoles, PC, Modding & retro, Esports.
+- Search, offline favorites, read stories greyed out, estimated reading time.
+- Tracked topics: related stories float to the top and are highlighted.
+- Duplicate stories clustered across outlets.
+- Hype of the day: flags big announcements (Nintendo Direct, State of Play, buyouts, delays, leaks).
+- A few-line summary at the top of each article, tap-to-define glossary, quiz of the day.
+- Podcast mode and text-to-speech.
+- Archives of the last 7 days, light and dark themes.
+- Update banner when a new version is released.
 
-## Installer
+## Install
 
-Tous les fichiers sont dans la [dernière release](https://github.com/wk0t/GamingDaily/releases/latest).
+All files are in the [latest release](https://github.com/wk0t/GamingDaily/releases/latest).
 
-**Windows.** Lance `GamingDaily.exe` : le magazine du jour s'ouvre dans le navigateur. SmartScreen peut prévenir parce que l'exécutable n'est pas signé (Informations complémentaires, puis Exécuter quand même). Pour l'ouvrir chaque matin à 8 h, lance `Activer_ouverture_auto.ps1`.
+**Windows.** Run `GamingDaily.exe`: today's magazine opens in the browser. SmartScreen may warn because the executable is unsigned (More info, then Run anyway). To open it every morning at 8 AM, run `enable-autostart.ps1`.
 
-**Android.** Télécharge `GamingDaily.apk`, ouvre-le et autorise l'installation depuis cette source. Android 7.0 ou plus récent.
+**Android.** Download `GamingDaily.apk`, open it and allow installation from this source. Android 7.0 or newer.
 
-**Linux.** Télécharge `GamingDaily-x86_64.AppImage`, puis :
+**Linux.** Download `GamingDaily-x86_64.AppImage`, then:
 
 ```bash
 chmod +x GamingDaily-x86_64.AppImage
 ./GamingDaily-x86_64.AppImage
 ```
 
-**iPhone.** Le `.ipa` est fourni non signé et n'a pas été testé sur un appareil réel. Il faut le signer avec ton Apple ID via [AltStore](https://altstore.io) ou [Sideloadly](https://sideloadly.io). Avec un compte gratuit, l'appli expire au bout de 7 jours.
+**iPhone.** The `.ipa` is provided unsigned and has not been tested on a real device. Sign it with your Apple ID via [AltStore](https://altstore.io) or [Sideloadly](https://sideloadly.io). With a free account, the app expires after 7 days.
 
-## Mises à jour
+## Updates
 
-Au démarrage, l'appli compare sa version au dernier tag des Releases GitHub de ce dépôt. Si une version plus récente existe, une bannière apparaît :
+At startup, the app compares its version to the latest release tag of this repository. If a newer version exists, a banner appears:
 
-- Android : l'APK est téléchargé puis l'installeur se lance.
-- Windows, Linux, iPhone : la bannière ouvre la page de la release.
+- Android: the APK is downloaded, then the installer launches.
+- Windows, Linux, iPhone: the banner opens the release page.
 
-Rien n'est téléchargé sans action de ta part sur Windows, Linux et iPhone.
+Nothing is downloaded without your action on Windows, Linux and iPhone.
 
-## Compiler soi-même
+## Build it yourself
 
-| Cible | Outils |
+| Target | Tools |
 |---|---|
-| Windows | PowerShell 5.1 et .NET Framework, déjà présents dans Windows |
-| Android | JDK 17, Android SDK build-tools 34, plateforme android-34 |
-| Linux | Node 20 et electron-builder |
+| Windows | PowerShell 5.1 and .NET Framework, already in Windows |
+| Android | JDK 17, Android SDK build-tools 34, platform android-34 |
+| Linux | Node 20 and electron-builder |
 | iPhone | macOS, Xcode 16, XcodeGen |
 
 ```powershell
-# Windows : embarque le moteur PowerShell dans un lanceur .exe
+# Windows: embeds the PowerShell engine into a .exe launcher
 ./build_exe.ps1
 
-# Android : aapt, javac, d8, zipalign, apksigner, sans Gradle
+# Android: aapt, javac, d8, zipalign, apksigner, no Gradle
 cd android
 ./build_apk.ps1
 ```
@@ -71,36 +71,37 @@ cd android
 cd linux && npm install && npm run dist
 
 # iPhone (macOS)
-cd ios && cp ../android/assets/index.html GamingDaily/index.html && xcodegen generate
+cd ios && cp ../android/assets/index.html GamingDaily/index.html && cp -r ../android/assets/fonts GamingDaily/fonts && xcodegen generate
 ```
 
-Linux et iPhone sont aussi construits par GitHub Actions (`.github/workflows/build.yml`).
+Linux and iOS are also built by GitHub Actions (`.github/workflows/build.yml`).
 
-Au premier build Android, une clé `android/gamingdaily.jks` est générée. Garde-la : Android refuse une mise à jour signée avec une autre clé. Elle est exclue du dépôt par `.gitignore`.
+On the first Android build, a `android/gamingdaily.jks` key is generated. Keep it: Android refuses an update signed with a different key. It is excluded from the repo by `.gitignore`.
 
 ## Structure
 
 ```
-GamingDaily.ps1     moteur PC : récupère les flux, extrait, traduit, génère la page
-build_exe.ps1       construit GamingDaily.exe
-android/            interface web (assets/index.html) et pont natif Java
-linux/              application Electron qui réutilise la même interface
-ios/                application WKWebView qui réutilise la même interface
-docs/               captures d'écran
+GamingDaily.ps1     PC engine: fetches the feeds, extracts, translates, generates the page
+build_exe.ps1       builds GamingDaily.exe
+enable-autostart.ps1 / disable-autostart.ps1   open the magazine every morning (Windows)
+android/            web UI (assets/index.html) + native Java bridge
+linux/              Electron app reusing the same UI
+ios/                WKWebView app reusing the same UI
+docs/               screenshots
 ```
 
-L'interface est un seul fichier, `android/assets/index.html`, réutilisé sur Android, Linux et iPhone. Chaque plateforme fournit un pont natif pour ce que le navigateur ne peut pas faire seul : requêtes sans restriction CORS, synthèse vocale, partage, mise à jour.
+The UI is a single file, `android/assets/index.html`, reused on Android, Linux and iOS (fonts in `android/assets/fonts/`). Each platform provides a native bridge for what the browser cannot do alone: CORS-free requests, text-to-speech, sharing, updates.
 
-## Vie privée
+## Privacy
 
-Pas de serveur, pas de compte, pas de statistiques. Favoris, historique et réglages restent sur ton appareil. Les seules connexions sortantes sont les flux RSS des médias, le service de traduction gratuit de Google pour les articles anglais, et l'API des Releases de ce dépôt.
+No server, no account, no statistics. Favorites, history and settings stay on your device. The only outgoing connections are the outlets' RSS feeds, Google's free translation service for non-English stories, and this repo's Releases API.
 
 ## Sources
 
 jeuxvideo.com, Gamekult, ActuGaming, Gameblog, JVFrance, IndieMag, NoFrag, PlayStation Blog, Xbox Wire, Nintendo-Town, XboxSquad, Gamergen, Frandroid Gaming, IGN, GameSpot, Eurogamer, Kotaku, Polygon, VGC, Destructoid, Insider Gaming, PC Gamer, Rock Paper Shotgun, Push Square, Nintendo Life, Pure Xbox, Wololo, Time Extension, RetroRGB.
 
-Chaque article garde un lien vers sa source. Les textes, images et marques appartiennent à leurs ayants droit. Projet personnel, non affilié à ces médias.
+Every story keeps a link to its source. Texts, images and trademarks belong to their respective owners. Personal project, not affiliated with these outlets.
 
-## Licence
+## License
 
-[MIT](LICENSE). Le contenu des articles n'est pas couvert par cette licence.
+[MIT](LICENSE). Article content is not covered by this license.

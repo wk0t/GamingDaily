@@ -1,239 +1,502 @@
 <!DOCTYPE html>
-<html lang="fr">
+<!--
+  Tech & Cyber Daily — Android app (WebView)
+  -------------------------------------------
+  Self-contained single file: UI + logic.
+  Runs inside an Android WebView and talks to the native side
+  (MainActivity.java) through the "AndroidBridge" object to:
+    - fetch feeds and pages without CORS issues,
+    - read articles aloud with the native text-to-speech,
+    - cache stories for offline reading,
+    - share an article.
+
+  Script layout:
+    1. RSS feeds and per-site content selectors
+    2. Filters (ad-blocking, tech relevance, categories)
+    3. Native bridge + translation
+    4. Fetching, extraction and clustering of stories
+    5. Rendering (cards, built-in reader, brief, quiz, ...)
+    6. Extras (hype level, glossary, podcast, theme, votes...)
+    7. Auto-update from GitHub
+-->
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Gaming Daily</title>
 <style>
-  :root{
-    --bg:#111214;--card:#17181b;--card2:#1c1d21;--line:#2a2c31;--txt:#e8e9eb;--muted:#8d9098;
-    --accent:#6aa3ff;--accent2:#6aa3ff;--gold:#d9a441;--danger:#e5675b;--ok:#4cb782;--radius:6px;--shadow:none;--fs:1;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  body{
-    background:var(--bg);color:var(--txt);
-    font-family:system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;line-height:1.5;min-height:100vh;
-    padding-top:env(safe-area-inset-top);font-size:calc(16px * var(--fs));
-  }
-  .wrap{max-width:760px;margin:0 auto;padding:20px 16px 80px}
-  header.top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;padding-bottom:14px;margin-bottom:16px;border-bottom:1px solid var(--line)}
-  .brand h1{margin:0;font-size:22px;font-weight:700;letter-spacing:-.01em;color:var(--txt)}
-  .brand .kick{display:block;font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:2px}
-  .brand .kick .dot{display:none}
-  .sub{font-size:13px;color:var(--muted);margin-top:2px;text-transform:capitalize}
-  .hbtns{display:flex;gap:4px}
-  .iconbtn{height:34px;padding:0 10px;border-radius:var(--radius);border:1px solid transparent;background:transparent;color:var(--muted);font-size:13px;font-family:inherit;cursor:pointer;flex:0 0 auto}
-  .iconbtn:hover{color:var(--txt);border-color:var(--line)}
-  .iconbtn.on{border-color:var(--accent);color:var(--accent)}
-  .searchbar{display:flex;gap:8px;margin-bottom:16px}
-  .searchbar input{flex:1;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);color:var(--txt);padding:10px 12px;font-size:14px;font-family:inherit;outline:none}
-  .searchbar input:focus{border-color:var(--accent)}
-  .tip{background:transparent;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px}
-  .tip .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
-  .tip h2{margin:4px 0 4px;font-size:15px;font-weight:600}.tip p{margin:0;color:var(--muted);font-size:13px}
-  /* Digest */
-  .digest{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;margin-bottom:16px}
-  .digest .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px}
-  .digest ol{margin:0;padding-left:20px}
-  .digest li{margin:0 0 7px;font-size:14px;line-height:1.4;cursor:pointer}
-  .digest li:last-child{margin-bottom:0}
-  .digest li b{color:var(--txt);font-weight:500}
-  .digest li span{color:var(--muted);font-size:12px}
-  /* Topics */
-  .topics{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
-  .topics .tlab{font-size:12px;color:var(--muted)}
-  .topic{display:inline-flex;align-items:center;gap:5px;background:transparent;border:1px solid var(--gold);color:var(--gold);padding:3px 8px;border-radius:var(--radius);font-size:12px}
-  .topic b{cursor:pointer;opacity:.7}
-  .topic-add{background:transparent;border:1px dashed var(--line);color:var(--muted);padding:3px 8px;border-radius:var(--radius);font-size:12px;font-family:inherit;cursor:pointer}
-  .filters{display:flex;gap:4px;flex-wrap:nowrap;overflow-x:auto;margin-bottom:12px;padding-bottom:0;border-bottom:1px solid var(--line);-webkit-overflow-scrolling:touch}
-  .chip{flex:0 0 auto;border:none;border-bottom:2px solid transparent;background:transparent;color:var(--muted);padding:8px 10px;cursor:pointer;font-size:13px;font-weight:500;font-family:inherit;border-radius:0;margin-bottom:-1px}
-  .chip:hover{color:var(--txt)}
-  .chip.active{color:var(--txt);border-bottom-color:var(--accent)}
-  .chip.fav.active{border-bottom-color:var(--danger)}
-  .count{font-size:12px;color:var(--muted);margin-bottom:14px}
-  .grid{display:grid;grid-template-columns:1fr;gap:16px}
-  @media(min-width:600px){.grid{grid-template-columns:1fr 1fr}}
-  .card{position:relative;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;text-decoration:none;color:inherit;cursor:pointer}
-  .card:hover{border-color:#3b3e45}
-  .card.read{opacity:.5}
-  .card.pin{border-color:var(--gold)}
-  .thumb{position:relative;aspect-ratio:16/9;background:#0c0d0f;overflow:hidden}
-  .thumb img{width:100%;height:100%;object-fit:cover;display:block}
-  .thumb .noimg{width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--muted)}
-  .badge{position:absolute;left:0;top:0;font-size:10.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:4px 8px;border-radius:0 0 var(--radius) 0;color:#fff;background:rgba(17,18,20,.88)}
-  .b-actu,.b-console,.b-pc,.b-modding,.b-esport{background:rgba(17,18,20,.88);color:#e8e9eb}
-  .heart{position:absolute;right:0;top:0;width:36px;height:36px;border:none;background:rgba(17,18,20,.88);color:var(--muted);font-size:15px;cursor:pointer;z-index:2;border-radius:0 0 0 var(--radius)}
-  .heart.on{color:var(--danger)}
-  .pinstar{position:absolute;right:8px;bottom:8px;font-size:13px;color:var(--gold)}
-  .body{padding:12px 14px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
-  .src{display:flex;align-items:center;justify-content:space-between;font-size:12px;color:var(--muted);gap:6px}
-  .src .name{font-weight:600;color:var(--txt)}
-  .src .tr{margin-left:6px;font-weight:400;font-size:12px;color:var(--muted);background:none;border:none;padding:0}
-  .src .meta{white-space:nowrap}
-  .card h3{margin:0;font-size:16px;font-weight:600;line-height:1.35}
-  .card h3 mark{background:rgba(217,164,65,.28);color:inherit;border-radius:2px;padding:0 2px}
-  .card .excerpt{margin:0;font-size:13.5px;color:var(--muted);flex:1}
-  .card .go{margin-top:4px;font-size:13px;font-weight:500;color:var(--accent)}
-  .relnote{font-size:12px;color:var(--muted)}
-  .status{text-align:center;padding:50px 16px;color:var(--muted)}
-  .status .big{font-size:17px;color:var(--txt);margin-bottom:8px}
-  .refreshbar{position:fixed;right:16px;bottom:calc(16px + env(safe-area-inset-bottom));z-index:40}
-  .refreshbar button{width:44px;height:44px;border-radius:var(--radius);border:1px solid var(--line);background:var(--card2);color:var(--txt);font-size:18px;cursor:pointer}
-  .refreshbar button:active{background:var(--line)}
-  .refreshbar button.spin{animation:spin 1s linear infinite}
-  @keyframes spin{to{transform:rotate(360deg)}}
-  footer{margin-top:36px;text-align:left;color:var(--muted);font-size:12px;border-top:1px solid var(--line);padding-top:16px}
-  .skeleton{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
-  .skeleton .sk{background:var(--card2);animation:sh 1.4s ease-in-out infinite alternate}
-  @keyframes sh{to{opacity:.5}}
-  .sk.img{aspect-ratio:16/9}.sk.line{height:11px;margin:11px 14px;border-radius:3px}.sk.line.s{width:40%}
+/* ---------- Fonts (embedded, work offline) ---------- */
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 800;font-display:swap;
+  src:url('fonts/newsreader-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Newsreader';font-style:normal;font-weight:200 800;font-display:swap;
+  src:url('fonts/newsreader-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 800;font-display:swap;
+  src:url('fonts/newsreader-italic-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Newsreader';font-style:italic;font-weight:200 800;font-display:swap;
+  src:url('fonts/newsreader-italic-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'Instrument Sans';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url('fonts/instrumentsans-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'Instrument Sans';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url('fonts/instrumentsans-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url('fonts/jetbrainsmono-normal-latin.woff2') format('woff2');
+  unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;}
+@font-face{font-family:'JetBrains Mono';font-style:normal;font-weight:400 700;font-display:swap;
+  src:url('fonts/jetbrainsmono-normal-latin-ext.woff2') format('woff2');
+  unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;}
 
-  /* Panneaux modaux (réglages) */
-  .modal{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:flex-end;justify-content:center;z-index:60}
-  .modal.open{display:flex}
-  .sheet{background:var(--card2);border:1px solid var(--line);border-radius:var(--radius) var(--radius) 0 0;width:100%;max-width:760px;max-height:82vh;overflow-y:auto;padding:18px 18px calc(24px + env(safe-area-inset-bottom))}
-  .sheet h3{margin:2px 0 14px;font-size:17px;font-weight:600}
-  .setrow{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
-  .setrow:last-child{border-bottom:none}
-  .toggle{width:40px;height:22px;border-radius:11px;border:1px solid var(--line);background:var(--card);position:relative;cursor:pointer;flex:0 0 auto}
-  .toggle.on{background:var(--accent);border-color:var(--accent)}
-  .toggle .knob{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .12s}
-  .toggle.on .knob{left:20px}
-  .srcgrid{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
-  .srctag{font-size:12px;padding:4px 9px;border-radius:var(--radius);border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
-  .srctag.on{border-color:var(--accent);color:var(--accent);background:transparent}
-  .fsbtns{display:flex;gap:6px}
-  .fsbtns button{width:34px;height:30px;border-radius:var(--radius);border:1px solid var(--line);background:var(--card);color:var(--txt);cursor:pointer;font-family:inherit}
-  .closebtn{margin-top:14px;width:100%;padding:11px;border-radius:var(--radius);border:none;background:var(--accent);color:#0b1220;font-weight:600;font-size:14px;font-family:inherit;cursor:pointer}
+/* ---------- Design tokens ---------- */
+:root{
+  --bg:#0f1015; --surface:#16171e; --surface2:#1c1e28; --line:#262933; --line-strong:#3a3e4e;
+  --txt:#eceaf2; --muted:#9a9cb0;
+  --accent:#a78bfa; --accent-soft:rgba(167,139,250,.14); --on-accent:#170b2e;
+  --danger:#fb7185; --ok:#34d399; --gold:#fbbf24;
+  --cat-actu:#4ea1ff; --cat-console:#34d399; --cat-pc:#22d3ee; --cat-modding:#fbbf24; --cat-esport:#fb7185;
+  --radius:10px; --radius-lg:14px;
+  --font-ui:'Instrument Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --font-serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --font-mono:'JetBrains Mono',ui-monospace,'SF Mono',Menlo,monospace;
+  --fs:1;
+}
+:root[data-theme="light"]{
+  --bg:#f8f7fb; --surface:#ffffff; --surface2:#f6f5fa; --line:#e6e4ee; --line-strong:#cfcde0;
+  --txt:#1c1a24; --muted:#5d5f70;
+  --accent:#6d28d9; --accent-soft:rgba(109,40,217,.10); --on-accent:#ffffff;
+  --danger:#be123c; --ok:#047857; --gold:#92600a;
+  --cat-actu:#2563eb; --cat-console:#047857; --cat-pc:#0e7490; --cat-modding:#b45309; --cat-esport:#be123c;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg); color:var(--txt);
+  font-family:var(--font-ui); line-height:1.5; min-height:100vh;
+  padding-top:env(safe-area-inset-top);
+  font-size:calc(16px * var(--fs));
+}
+button{font-family:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.wrap{max-width:720px;margin:0 auto;padding:18px 16px 96px}
 
-  /* ---- Lecture intégrée ---- */
-  .reader-backdrop{position:fixed;inset:0;background:var(--bg);display:none;z-index:50;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .reader{max-width:680px;margin:0 auto;padding:14px 16px calc(40px + env(safe-area-inset-bottom));padding-top:calc(14px + env(safe-area-inset-top))}
-  .rbar{position:sticky;top:0;display:flex;justify-content:space-between;gap:8px;z-index:2;padding:6px 0;background:var(--bg);border-bottom:1px solid var(--line)}
-  .rbar .rgroup{display:flex;gap:6px}
-  .rbtn{min-width:38px;height:38px;border-radius:var(--radius);border:1px solid var(--line);background:var(--card);color:var(--txt);font-size:15px;font-family:inherit;cursor:pointer}
-  .rbtn.on{border-color:var(--accent);color:var(--accent)}
-  .rbtn.fav.on{color:var(--danger);border-color:var(--danger)}
-  .rmeta{display:flex;gap:8px;align-items:center;font-size:12px;color:var(--muted);flex-wrap:wrap;margin-top:14px}
-  .rmeta .badge{position:static;border-radius:var(--radius);border:1px solid var(--line);background:transparent}
-  .rmeta .rsrc{font-weight:600;color:var(--txt)}
-  .rmeta .tr{font-weight:400;color:var(--muted);background:none;border:none;padding:0}
-  .rtitle{font-size:24px;line-height:1.25;margin:10px 0 6px;font-weight:700;letter-spacing:-.01em}
-  .rtime{font-size:12.5px;color:var(--muted);margin:0 0 14px}
-  .reader img{max-width:100%;border-radius:var(--radius);margin:5px 0 14px;display:block}
-  .reader p{font-size:16px;line-height:1.7;color:#d3d5d9;margin:0 0 14px}
-  .reader p mark,.reader h3 mark{background:rgba(217,164,65,.28);color:inherit;border-radius:2px;padding:0 2px}
-  .reader h3{font-size:18px;margin:22px 0 9px;color:var(--txt)}
-  .rnote{color:var(--muted);font-style:italic}
-  .rload{color:var(--muted);text-align:center;padding:26px 0;font-size:14px}
-  .rrelated{margin:16px 0;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);font-size:13px}
-  .rrelated .rl{color:var(--muted);font-weight:600;font-size:11px;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-  .rrelated a{display:block;color:var(--accent);text-decoration:none;padding:3px 0}
-  .rsource{display:inline-block;margin-top:14px;color:var(--accent);font-weight:500;text-decoration:none;font-size:13px;border:1px solid var(--line);padding:8px 14px;border-radius:var(--radius)}
-  /* --- fonctions bonus --- */
-  .card.crit{border-color:var(--danger)}
-  .alertpill{color:var(--danger);font-weight:700;font-size:11px;margin-right:5px}
-  .menace{display:none;align-items:center;gap:6px;font-size:12px;padding:0;border:none;background:none;color:var(--muted);margin-bottom:14px}
-  .menace b{font-weight:600;color:var(--txt)}
-  .quiz{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-bottom:16px;display:none}
-  .quiz .lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:8px}
-  .quiz .qq{font-size:15px;font-weight:600;margin-bottom:10px}
-  .qopts{display:flex;flex-direction:column;gap:6px}
-  .qopt{text-align:left;background:transparent;border:1px solid var(--line);color:var(--txt);border-radius:var(--radius);padding:9px 12px;font-size:13.5px;cursor:pointer;font-family:inherit}
-  .qopt:hover:not(:disabled){border-color:var(--accent)}
-  .qopt.ok{border-color:var(--ok);background:rgba(76,183,130,.1)}
-  .qopt.ko{border-color:var(--danger);background:rgba(229,103,91,.1)}
-  .qopt:disabled{cursor:default}
-  .qexp{margin-top:10px;font-size:13px;color:var(--muted)}
-  .tldr{background:transparent;border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--radius);padding:10px 14px;margin:0 0 16px}
-  .tldr .tl{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
-  .tldr ul{margin:0;padding-left:18px}.tldr li{margin:0 0 5px;font-size:14px;color:#c4c7cc}
-  .gl{border-bottom:1px dotted var(--muted);cursor:pointer}
-  .glpop{position:fixed;z-index:80;max-width:290px;background:var(--card2);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px;font-size:13px;line-height:1.5;color:var(--txt);display:none}
-  .glpop b{color:var(--txt);text-transform:capitalize}
-  .podbar{position:fixed;left:0;right:0;bottom:0;z-index:65;background:var(--card2);border-top:1px solid var(--line);padding:10px 14px;display:none;align-items:center;gap:12px}
-  .podbar .pt{flex:1;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .podbar button{background:var(--accent);border:none;color:#0b1220;border-radius:var(--radius);padding:8px 14px;font-weight:600;font-family:inherit;cursor:pointer}
-  .toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:var(--card2);border:1px solid var(--line);color:var(--txt);padding:10px 16px;border-radius:var(--radius);font-size:13px;z-index:90;display:none}
-  .archday{margin-bottom:16px}
-  .archdate{font-weight:600;font-size:13px;text-transform:capitalize;margin-bottom:6px;color:var(--muted)}
-  .archlink{display:block;color:var(--txt);text-decoration:none;padding:6px 0;border-bottom:1px solid var(--line);font-size:13.5px}
-  .archlink span{color:var(--muted);font-size:12px}
-  /* --- bannière de mise à jour --- */
-  .updbar{display:none;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;background:var(--card2);border:1px solid var(--accent);color:var(--txt);padding:10px 14px;border-radius:var(--radius);margin-bottom:16px;font-size:13.5px}
-  .updbar .ub-txt{display:flex;align-items:center;gap:6px}
-  .updbar .ub-actions{display:flex;align-items:center;gap:8px;flex:0 0 auto}
-  .updbar .ub-go{background:var(--accent);color:#0b1220;border:none;border-radius:var(--radius);padding:7px 14px;font-weight:600;font-size:13px;font-family:inherit;cursor:pointer}
-  .updbar .ub-x{background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:var(--radius);width:30px;height:30px;font-size:14px;cursor:pointer}
-  :root[data-theme="light"]{--bg:#f6f6f4;--card:#ffffff;--card2:#ffffff;--line:#dedfe2;--txt:#1b1c1f;--muted:#666a72;--accent:#2563c9;--accent2:#2563c9;--gold:#9a6b0c;--danger:#c4382c;--ok:#1f8a58}
-  :root[data-theme="light"] .tldr li,:root[data-theme="light"] .tip p{color:#44474d}
-  :root[data-theme="light"] .reader p{color:#2a2c30}
-  :root[data-theme="light"] .badge,:root[data-theme="light"] .heart,:root[data-theme="light"] .b-actu,:root[data-theme="light"] .b-console,:root[data-theme="light"] .b-pc,:root[data-theme="light"] .b-modding,:root[data-theme="light"] .b-esport{background:rgba(255,255,255,.92);color:#1b1c1f}
-  :root[data-theme="light"] .closebtn,:root[data-theme="light"] .updbar .ub-go,:root[data-theme="light"] .podbar button{color:#fff}
+/* ---------- Masthead ---------- */
+header.top{
+  position:relative; display:flex; align-items:flex-start; justify-content:space-between;
+  gap:12px; flex-wrap:wrap; padding-bottom:14px; margin-bottom:18px;
+  border-bottom:2px solid var(--txt);
+}
+header.top::after{content:"";position:absolute;left:0;right:0;bottom:-6px;border-bottom:1px solid var(--txt)}
+.brand h1{
+  margin:0; font-family:var(--font-serif); font-weight:700; font-size:30px;
+  letter-spacing:-.02em; line-height:1.05;
+}
+.brand .kick{
+  display:flex; align-items:center; gap:7px; margin-bottom:5px;
+  font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted);
+}
+.brand .kick .dot{width:7px;height:7px;border-radius:50%;background:var(--accent)}
+.sub{
+  margin-top:4px; font-family:var(--font-mono); font-size:12px; color:var(--muted);
+  font-variant-numeric:tabular-nums;
+}
+.hbtns{display:flex; gap:6px; flex:0 0 auto}
+.iconbtn{
+  width:44px; height:44px; display:inline-flex; align-items:center; justify-content:center;
+  border-radius:var(--radius); border:1px solid transparent; background:transparent;
+  color:var(--muted); cursor:pointer; padding:0;
+}
+.iconbtn svg{width:21px;height:21px}
+.iconbtn:hover{color:var(--txt); border-color:var(--line); background:var(--surface)}
+.iconbtn.on{border-color:var(--accent); color:var(--accent)}
+
+/* ---------- Search ---------- */
+.searchbar{position:relative; margin-bottom:18px}
+.searchbar svg{position:absolute; left:13px; top:50%; transform:translateY(-50%); width:17px; height:17px; color:var(--muted); pointer-events:none}
+.searchbar input{
+  width:100%; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+  color:var(--txt); padding:12px 14px 12px 40px; font-size:15px; font-family:inherit; outline:none;
+}
+.searchbar input::placeholder{color:var(--muted)}
+.searchbar input:focus{border-color:var(--accent)}
+
+/* ---------- Notice blocks (tip, brief) ---------- */
+.notice{padding:2px 0 16px; margin-bottom:16px; border-bottom:1px solid var(--line)}
+.notice .lbl{
+  font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.14em;
+  text-transform:uppercase; color:var(--muted); margin-bottom:7px;
+}
+.notice h2{margin:0 0 5px; font-family:var(--font-serif); font-size:20px; font-weight:600; letter-spacing:-.01em; line-height:1.25; text-wrap:balance}
+.notice p{margin:0; color:var(--muted); font-size:14px; line-height:1.55}
+/* Brief: ranked list, serif numerals */
+.digest ol{list-style:none; margin:0; padding:0; counter-reset:brief}
+.digest li{
+  counter-increment:brief; display:grid; grid-template-columns:34px 1fr; gap:10px;
+  padding:9px 0; cursor:pointer; border-top:1px solid var(--line); align-items:baseline;
+}
+.digest li:first-child{border-top:none; padding-top:2px}
+.digest li::before{
+  content:counter(brief,decimal-leading-zero);
+  font-family:var(--font-serif); font-size:20px; font-weight:600; color:var(--accent);
+  font-variant-numeric:tabular-nums;
+}
+.digest li b{font-family:var(--font-serif); font-weight:600; font-size:16px; line-height:1.35; text-wrap:balance}
+.digest li span{display:block; font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-top:2px}
+.digest li:hover b{color:var(--accent)}
+
+/* ---------- Status pill / quiz / topics ---------- */
+.hype{
+  display:none; align-items:center; gap:8px; margin-bottom:16px;
+  font-family:var(--font-mono); font-size:11.5px; color:var(--muted);
+}
+.hype .pip{width:8px;height:8px;border-radius:50%;background:var(--ok);flex:0 0 auto}
+.hype b{color:var(--txt);font-weight:600}
+.quiz{border-top:1px solid var(--line); padding:14px 0 16px; margin-bottom:16px; border-bottom:1px solid var(--line); display:none}
+.quiz .lbl{font-family:var(--font-mono); font-size:11px; letter-spacing:.14em; text-transform:uppercase; color:var(--muted); font-weight:500; margin-bottom:9px}
+.quiz .qq{font-family:var(--font-serif); font-size:18px; font-weight:600; line-height:1.35; margin-bottom:12px; text-wrap:balance}
+.qopts{display:flex; flex-direction:column; gap:8px}
+.qopt{
+  display:flex; align-items:baseline; gap:10px; text-align:left;
+  background:transparent; border:1px solid var(--line); color:var(--txt);
+  border-radius:var(--radius); padding:11px 13px; font-size:14px; cursor:pointer;
+}
+.qopt .k{font-family:var(--font-mono); font-size:11px; color:var(--muted); flex:0 0 auto}
+.qopt:hover:not(:disabled){border-color:var(--accent)}
+.qopt.ok{border-color:var(--ok); background:rgba(61,214,140,.09)}
+.qopt.ok .k{color:var(--ok)}
+.qopt.ko{border-color:var(--danger); background:rgba(229,72,77,.09)}
+.qopt.ko .k{color:var(--danger)}
+.qopt:disabled{cursor:default}
+.qexp{margin-top:11px; font-size:13.5px; color:var(--muted); line-height:1.55}
+.topics{display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-bottom:6px}
+.topics .tlab{font-family:var(--font-mono); font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.1em}
+.topic{
+  display:inline-flex; align-items:center; gap:6px; background:transparent;
+  border:1px solid var(--gold); color:var(--gold); padding:4px 10px;
+  border-radius:999px; font-size:12.5px; font-weight:500;
+}
+.topic b{cursor:pointer; opacity:.7; font-weight:600}
+.topic-add{
+  background:transparent; border:1px dashed var(--line-strong); color:var(--muted);
+  padding:4px 11px; border-radius:999px; font-size:12.5px; cursor:pointer;
+}
+.topic-add:hover{color:var(--txt); border-color:var(--muted)}
+
+/* ---------- Filter tabs ---------- */
+.filters{
+  display:flex; gap:2px; overflow-x:auto; margin:10px 0 4px; padding-bottom:0;
+  border-bottom:1px solid var(--line); -webkit-overflow-scrolling:touch; scrollbar-width:none;
+}
+.filters::-webkit-scrollbar{display:none}
+.chip{
+  flex:0 0 auto; border:none; border-bottom:2px solid transparent; background:transparent;
+  color:var(--muted); padding:9px 11px; cursor:pointer; margin-bottom:-1px;
+  font-family:var(--font-mono); font-size:12px; font-weight:500; letter-spacing:.08em; text-transform:uppercase;
+}
+.chip:hover{color:var(--txt)}
+.chip.active{color:var(--txt); border-bottom-color:var(--accent)}
+.chip.fav.active{border-bottom-color:var(--danger)}
+.count{font-family:var(--font-mono); font-size:11px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin:10px 0 2px; font-variant-numeric:tabular-nums}
+
+/* ---------- Story list: hero + editorial rows ---------- */
+.grid{display:grid; grid-template-columns:1fr; column-gap:28px}
+.card{
+  display:grid; grid-template-columns:1fr 108px; gap:14px; align-items:start;
+  padding:16px 0; border-top:1px solid var(--line); text-decoration:none; color:inherit; cursor:pointer;
+}
+.card:first-child{grid-template-columns:1fr; border-top:none; padding-top:14px}
+.thumb{position:relative; grid-column:2; grid-row:1; aspect-ratio:4/3; background:var(--surface2); border-radius:8px; overflow:hidden}
+.body{grid-column:1; grid-row:1}
+.card:first-child .thumb{grid-column:1; grid-row:1; aspect-ratio:16/9; border-radius:var(--radius)}
+.card:first-child .body{grid-column:1; grid-row:2}
+.thumb img{width:100%; height:100%; object-fit:cover; display:block}
+.thumb .noimg{width:100%; height:100%; display:flex; align-items:center; justify-content:center; color:var(--muted)}
+.thumb .noimg svg{width:26px; height:26px; opacity:.7}
+.badge{
+  position:absolute; left:8px; top:8px; z-index:2;
+  display:inline-flex; align-items:center; gap:6px;
+  font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:.12em; text-transform:uppercase;
+  padding:4px 8px; border-radius:6px; color:var(--txt);
+  background:rgba(13,14,17,.82); backdrop-filter:blur(4px);
+}
+:root[data-theme="light"] .badge{background:rgba(255,255,255,.88); color:var(--txt)}
+.badge .cdot{width:6px;height:6px;border-radius:50%}
+.badge.b-actu .cdot{background:var(--cat-actu)} .badge.b-console .cdot{background:var(--cat-console)}
+.badge.b-pc .cdot{background:var(--cat-pc)} .badge.b-modding .cdot{background:var(--cat-modding)} .badge.b-esport .cdot{background:var(--cat-esport)}
+.cat{display:none; align-items:center; gap:5px; font-weight:600; letter-spacing:.1em; text-transform:uppercase; font-size:10px; color:var(--muted); white-space:nowrap}
+.cdot.c-actu{background:var(--cat-actu)} .cdot.c-console{background:var(--cat-console)}
+.cdot.c-pc{background:var(--cat-pc)} .cdot.c-modding{background:var(--cat-modding)} .cdot.c-esport{background:var(--cat-esport)}
+.meta .lft{display:flex; align-items:center; gap:7px; min-width:0; overflow:hidden; white-space:nowrap}
+@media(max-width:679.98px){
+  .cat{display:inline-flex}
+  .card:not(:first-child) .badge{display:none}
+}
+.card:first-child .cat{display:none}
+.heart{
+  position:absolute; right:0; top:0; z-index:3; width:38px; height:38px;
+  border:none; border-radius:0 0 0 8px; display:flex; align-items:center; justify-content:center;
+  background:rgba(13,14,17,.82); color:var(--muted); font-size:17px; cursor:pointer;
+}
+:root[data-theme="light"] .heart{background:rgba(255,255,255,.88)}
+.heart.on{color:var(--danger)}
+.pinstar{position:absolute; right:8px; bottom:8px; z-index:2; color:var(--gold); display:flex}
+.pinstar svg{width:15px; height:15px; filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+.body{display:flex; flex-direction:column; gap:6px; min-width:0}
+.meta{
+  display:flex; align-items:center; justify-content:space-between; gap:8px;
+  font-family:var(--font-mono); font-size:11px; color:var(--muted); font-variant-numeric:tabular-nums;
+}
+.meta .srcname{color:var(--txt); font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap}
+.meta .tr{color:var(--accent); font-weight:500}
+.card h3{
+  margin:0; font-family:var(--font-serif); font-size:19px; font-weight:600;
+  line-height:1.28; letter-spacing:-.01em; text-wrap:balance;
+}
+.card:first-child h3{font-size:25px}
+.card h3 mark, .reader mark{background:var(--accent-soft); color:inherit; border-radius:3px; padding:0 2px}
+.card .excerpt{
+  margin:0; font-size:13.5px; color:var(--muted); line-height:1.5;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.card .foot{justify-content:flex-start; gap:6px}
+.card .foot .relnote{margin-left:auto}
+.card.read{opacity:.45}
+.card.pin .body h3::after{content:""; display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--gold); margin-left:8px; vertical-align:middle}
+.card.crit{box-shadow:inset 3px 0 0 var(--danger)}
+.alertpill{color:var(--danger); font-weight:700; margin-right:6px}
+@media(min-width:680px){
+  .wrap{max-width:980px; padding:24px 22px 96px}
+  .grid{grid-template-columns:1fr 1fr}
+  .card{grid-template-columns:1fr; padding:18px 0}
+  .card .thumb{grid-column:1; grid-row:1; aspect-ratio:16/9; border-radius:var(--radius)}
+  .card .body{grid-column:1; grid-row:2}
+  .card:first-child{grid-column:1 / -1; grid-template-columns:1.05fr 1fr; gap:24px; align-items:center; padding:20px 0 22px}
+  .card:first-child .thumb{grid-column:1; grid-row:1; aspect-ratio:16/10}
+  .card:first-child .body{grid-column:2; grid-row:1}
+  .card:first-child h3{font-size:29px}
+  .card:first-child .excerpt{-webkit-line-clamp:3; font-size:14.5px}
+}
+
+/* ---------- Empty / loading states ---------- */
+.status{text-align:center; padding:56px 16px; color:var(--muted)}
+.status .big{font-family:var(--font-serif); font-size:22px; font-weight:600; color:var(--txt); margin-bottom:8px}
+.status .hint{font-size:14px; max-width:340px; margin:0 auto}
+.skeleton{display:grid; grid-template-columns:1fr 108px; gap:14px; padding:16px 0; border-top:1px solid var(--line)}
+.skeleton:first-child{grid-template-columns:1fr; border-top:none}
+.sk{background:var(--surface2); border-radius:6px; animation:sh 1.4s ease-in-out infinite alternate}
+.sk.thumb{aspect-ratio:4/3; border-radius:8px; grid-column:2; grid-row:1}
+.skeleton>div:first-child{grid-column:1; grid-row:1}
+.skeleton:first-child .sk.thumb{grid-column:1; grid-row:1; aspect-ratio:16/9; border-radius:var(--radius)}
+.skeleton:first-child>div:first-child{grid-column:1; grid-row:2}
+.sk.line{height:12px; margin-bottom:10px}
+.sk.line.w60{width:60%} .sk.line.w40{width:40%}
+.sk.title{height:20px; margin:12px 0 10px; width:85%}
+.skeleton:first-child .sk.title{height:26px; width:70%}
+@keyframes sh{to{opacity:.45}}
+@media(prefers-reduced-motion:reduce){.sk{animation:none} .refreshbar button.spin svg{animation:none}}
+
+/* ---------- Floating refresh ---------- */
+.refreshbar{position:fixed; right:16px; bottom:calc(18px + env(safe-area-inset-bottom)); z-index:40}
+.refreshbar button{
+  width:52px; height:52px; border-radius:50%; border:none; cursor:pointer;
+  background:var(--accent); color:var(--on-accent); display:flex; align-items:center; justify-content:center;
+  box-shadow:0 6px 18px rgba(0,0,0,.35);
+}
+.refreshbar button svg{width:22px; height:22px}
+.refreshbar button.spin svg{animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+footer{
+  margin-top:40px; padding-top:16px; border-top:1px solid var(--line);
+  color:var(--muted); font-family:var(--font-mono); font-size:11px; line-height:1.7;
+}
+
+/* ---------- Bottom sheets (settings, archives) ---------- */
+.modal{position:fixed; inset:0; background:rgba(0,0,0,.62); display:none; align-items:flex-end; justify-content:center; z-index:60}
+.modal.open{display:flex}
+.sheet{
+  background:var(--surface); border:1px solid var(--line); border-bottom:none;
+  border-radius:var(--radius-lg) var(--radius-lg) 0 0; width:100%; max-width:720px;
+  max-height:84vh; overflow-y:auto; padding:20px 18px calc(24px + env(safe-area-inset-bottom));
+}
+.sheet h3{margin:0 0 6px; font-family:var(--font-serif); font-size:22px; font-weight:700; letter-spacing:-.01em}
+.setrow{display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 0; border-bottom:1px solid var(--line); font-size:14.5px}
+.setrow:last-of-type{border-bottom:none}
+.toggle{width:46px; height:27px; border-radius:999px; border:1px solid var(--line-strong); background:var(--surface2); position:relative; cursor:pointer; flex:0 0 auto; transition:background .15s}
+.toggle.on{background:var(--accent); border-color:var(--accent)}
+.toggle .knob{position:absolute; top:2px; left:2px; width:21px; height:21px; border-radius:50%; background:#fff; transition:left .15s}
+.toggle.on .knob{left:21px}
+.srcgrid{display:flex; flex-wrap:wrap; gap:7px; margin-top:10px}
+.srctag{
+  font-family:var(--font-mono); font-size:12px; padding:6px 11px; border-radius:999px;
+  border:1px solid var(--line); background:transparent; color:var(--muted); cursor:pointer;
+}
+.srctag.on{border-color:var(--accent); color:var(--accent)}
+.fsbtns{display:flex; gap:7px}
+.fsbtns button{
+  width:40px; height:34px; border-radius:8px; border:1px solid var(--line);
+  background:var(--surface2); color:var(--txt); cursor:pointer; font-size:14px; font-family:var(--font-mono);
+}
+.closebtn{
+  margin-top:18px; width:100%; padding:13px; border-radius:var(--radius); border:none;
+  background:var(--accent); color:var(--on-accent); font-weight:600; font-size:15px; cursor:pointer;
+}
+.srchead{padding:14px 0 4px; font-size:14.5px}
+.srchead span{color:var(--muted); font-size:12.5px}
+
+/* ---------- Reader ---------- */
+.reader-backdrop{position:fixed; inset:0; background:var(--bg); display:none; z-index:50; overflow-y:auto; -webkit-overflow-scrolling:touch}
+.reader{max-width:660px; margin:0 auto; padding:10px 16px calc(48px + env(safe-area-inset-bottom)); padding-top:calc(10px + env(safe-area-inset-top))}
+.rbar{
+  position:sticky; top:0; z-index:2; display:flex; justify-content:space-between; gap:8px;
+  padding:8px 0; background:var(--bg); border-bottom:1px solid var(--line);
+}
+.rbar .rgroup{display:flex; gap:7px}
+.rbtn{
+  min-width:42px; height:42px; border-radius:var(--radius); border:1px solid var(--line);
+  background:var(--surface); color:var(--txt); cursor:pointer;
+  display:inline-flex; align-items:center; justify-content:center; padding:0 8px;
+  font-size:16px;
+}
+.rbtn svg{width:19px; height:19px}
+.rbtn.on{border-color:var(--accent); color:var(--accent)}
+.rbtn.fav.on{color:var(--danger); border-color:var(--danger)}
+.rmeta{display:flex; gap:10px; align-items:center; flex-wrap:wrap; margin-top:18px; font-family:var(--font-mono); font-size:11.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+.rmeta .badge{position:static; background:var(--surface); border:1px solid var(--line)}
+.rmeta .rsrc{font-weight:600; color:var(--txt)}
+.rmeta .tr{color:var(--accent)}
+.rtitle{font-family:var(--font-serif); font-size:31px; line-height:1.18; font-weight:700; letter-spacing:-.015em; margin:12px 0 8px; text-wrap:balance}
+.rtime{font-family:var(--font-mono); font-size:12px; color:var(--muted); margin:0 0 18px; font-variant-numeric:tabular-nums}
+.reader img{max-width:100%; border-radius:var(--radius); margin:6px 0 18px; display:block}
+.reader p{font-family:var(--font-serif); font-size:18.5px; line-height:1.75; color:var(--txt); margin:0 0 16px; font-optical-sizing:auto}
+.reader h3{font-family:var(--font-serif); font-size:22px; font-weight:700; margin:26px 0 10px; letter-spacing:-.01em}
+.rnote{color:var(--muted); font-style:italic}
+.rload{color:var(--muted); text-align:center; padding:28px 0; font-size:14px}
+.rrelated{margin:20px 0; padding:14px 16px; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius); font-size:14px}
+.rrelated .rl{font-family:var(--font-mono); font-size:10.5px; color:var(--muted); font-weight:600; text-transform:uppercase; letter-spacing:.12em; margin-bottom:8px}
+.rrelated a{display:block; color:var(--accent); text-decoration:none; padding:4px 0; font-weight:500}
+.rsource{
+  display:inline-block; margin-top:18px; color:var(--accent); font-weight:600; text-decoration:none;
+  font-size:14px; border:1px solid var(--line); padding:10px 16px; border-radius:999px;
+}
+/* TL;DR */
+.tldr{border-left:3px solid var(--accent); background:var(--surface); border-radius:0 var(--radius) var(--radius) 0; padding:13px 16px; margin:0 0 20px}
+.tldr .tl{font-family:var(--font-mono); font-size:10.5px; font-weight:600; letter-spacing:.12em; text-transform:uppercase; color:var(--muted); margin-bottom:8px}
+.tldr ul{margin:0; padding-left:18px}
+.tldr li{margin:0 0 6px; font-size:14.5px; line-height:1.55; color:var(--txt)}
+.tldr li:last-child{margin-bottom:0}
+/* Glossary */
+.gl{border-bottom:1px dotted var(--muted); cursor:pointer}
+.glpop{
+  position:fixed; z-index:80; max-width:300px; background:var(--surface2); border:1px solid var(--line-strong);
+  border-radius:var(--radius); padding:11px 13px; font-size:13px; line-height:1.55; color:var(--txt);
+  display:none; box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+.glpop b{font-family:var(--font-mono); font-size:12px; color:var(--accent)}
+
+/* ---------- Podcast bar / toast / update banner / archives ---------- */
+.podbar{
+  position:fixed; left:0; right:0; bottom:0; z-index:65; display:none; align-items:center; gap:12px;
+  background:var(--surface); border-top:1px solid var(--line);
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+}
+.podbar .pt{flex:1; font-size:13px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:var(--font-mono); color:var(--txt)}
+.podbar button{
+  background:var(--accent); border:none; color:var(--on-accent); border-radius:999px;
+  padding:9px 16px; font-weight:600; font-size:13px; cursor:pointer;
+}
+.toast{
+  position:fixed; left:50%; bottom:96px; transform:translateX(-50%); z-index:90; display:none;
+  background:var(--surface2); border:1px solid var(--line-strong); color:var(--txt);
+  padding:11px 18px; border-radius:999px; font-size:13px; box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.updatebar{
+  display:none; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:18px;
+  background:var(--accent-soft); border:1px solid var(--accent); border-radius:var(--radius);
+  padding:11px 14px; font-size:13.5px;
+}
+.updatebar b{color:var(--txt)}
+.updatebar a{color:var(--on-accent); background:var(--accent); padding:7px 14px; border-radius:999px; text-decoration:none; font-weight:600; margin-left:auto}
+.updatebar .uc{cursor:pointer; color:var(--muted); font-weight:600; background:none; border:none; font-size:14px; padding:4px}
+.archday{margin-bottom:18px}
+.archdate{font-family:var(--font-mono); font-size:12px; text-transform:uppercase; letter-spacing:.1em; margin-bottom:6px; color:var(--muted)}
+.archlink{display:block; color:var(--txt); text-decoration:none; padding:8px 0; border-bottom:1px solid var(--line); font-size:14.5px; font-family:var(--font-serif); font-weight:500; line-height:1.4}
+.archlink span{color:var(--muted); font-size:12px; font-family:var(--font-mono)}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div id="updbar" class="updbar"></div>
+  <div class="updatebar" id="updateBar"></div>
   <header class="top">
     <div class="brand">
-      <span class="kick">Édition du jour</span>
+      <span class="kick"><span class="dot"></span>Today's edition</span>
       <h1>Gaming Daily</h1>
       <div class="sub" id="todaySub">—</div>
     </div>
     <div class="hbtns">
-      <button class="iconbtn" id="podBtn" title="Mode podcast">Podcast</button><button class="iconbtn" id="ttsAllBtn" title="Écouter le résumé">Écouter</button>
-      <button class="iconbtn" id="themeBtn" title="Thème clair/sombre">Thème</button><button class="iconbtn" id="archBtn" title="Archives">Archives</button><button class="iconbtn" id="setBtn" title="Réglages">Réglages</button>
+      <button class="iconbtn" id="podBtn" title="Podcast mode" aria-label="Podcast mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/></svg></button>
+      <button class="iconbtn" id="ttsAllBtn" title="Read the brief aloud" aria-label="Read the brief aloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+      <button class="iconbtn" id="themeBtn" title="Toggle light/dark theme" aria-label="Toggle light/dark theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18V3z" fill="currentColor" stroke="none"/></svg></button>
+      <button class="iconbtn" id="archBtn" title="Archives" aria-label="Archives"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></button>
+      <button class="iconbtn" id="setBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="14" y2="6"/><line x1="10" y1="6" x2="3" y2="6"/><circle cx="12" cy="6" r="2"/><line x1="21" y1="12" x2="16" y2="12"/><line x1="12" y1="12" x2="3" y2="12"/><circle cx="14" cy="12" r="2"/><line x1="21" y1="18" x2="12" y2="18"/><line x1="8" y1="18" x2="3" y2="18"/><circle cx="10" cy="18" r="2"/></svg></button>
     </div>
   </header>
 
   <div class="searchbar">
-    <input id="search" type="search" placeholder="Rechercher un jeu, une console, une source…" autocomplete="off">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+    <input id="search" type="search" placeholder="Search stories, topics, sources…" autocomplete="off">
   </div>
 
-  <section class="tip">
-    <div class="lbl">Astuce du jour</div>
+  <section class="notice tip">
+    <div class="lbl">Tip of the day</div>
     <h2 id="tipTitle">—</h2>
     <p id="tipText">—</p>
   </section>
 
-  <section class="digest" id="digest" style="display:none">
-    <div class="lbl">À retenir</div>
+  <section class="notice digest" id="digest" style="display:none">
+    <div class="lbl">The brief — top 3</div>
     <ol id="digestList"></ol>
   </section>
 
-  <div id="menace" class="menace"></div><section class="quiz" id="quiz"></section><div class="topics" id="topics"></div>
+  <div id="hype" class="hype"></div><section class="quiz" id="quiz"></section><div class="topics" id="topics"></div>
 
   <div class="filters" id="filters">
-    <button class="chip active" data-cat="all">Tout</button>
-    <button class="chip" data-cat="actu">Actu</button>
+    <button class="chip active" data-cat="all">All</button>
+    <button class="chip" data-cat="actu">News</button>
     <button class="chip" data-cat="console">Consoles</button>
     <button class="chip" data-cat="pc">PC</button>
-    <button class="chip" data-cat="modding">Modding &amp; rétro</button>
-    <button class="chip" data-cat="esport">Esport</button>
-    <button class="chip fav" data-cat="fav">Favoris</button>
+    <button class="chip" data-cat="modding">Modding &amp; retro</button>
+    <button class="chip" data-cat="esport">Esports</button>
+    <button class="chip fav" data-cat="fav">Saved</button>
   </div>
   <div class="count" id="count"></div>
 
   <div class="grid" id="grid"></div>
   <div class="status" id="status" style="display:none"></div>
 
-  <footer>Articles extraits des flux publics des médias jeu vidéo — lecture sans publicité, news anglaises traduites.<br>Chaque article garde un lien vers sa source d’origine.</footer>
+  <footer>
+    Stories pulled from the public RSS feeds of the listed outlets — ad-free reading, non-English items translated on the fly.<br>
+    Every story links back to its original source.<br>
+    <span style="opacity:.6">Gaming Daily v1.1.0 · auto-updates from GitHub</span>
+  </footer>
 </div>
 
-<div class="refreshbar"><button id="refreshBtn" title="Actualiser">⟳</button></div>
+<div class="refreshbar"><button id="refreshBtn" title="Refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button></div>
 
-<!-- Réglages -->
+<!-- Settings -->
 <div class="modal" id="setModal">
   <div class="sheet">
-    <h3>Réglages</h3>
-    <div class="setrow"><span>Traduire les news anglaises en français</span><div class="toggle" id="tgTranslate"><div class="knob"></div></div></div>
-    <div class="setrow"><span>Regrouper les articles en double</span><div class="toggle" id="tgCluster"><div class="knob"></div></div></div>
-    <div class="setrow"><span>Taille du texte</span><div class="fsbtns"><button id="fsMinus">A−</button><button id="fsPlus">A+</button></div></div>
-    <div style="padding:11px 0 4px;font-size:14px">Sources actives <span style="color:var(--muted);font-size:12px">(touche pour activer/désactiver)</span></div>
+    <h3>Settings</h3>
+    <div class="setrow"><span>Translate non-English stories</span><div class="toggle" id="tgTranslate"><div class="knob"></div></div></div>
+    <div class="setrow"><span>Cluster duplicate stories</span><div class="toggle" id="tgCluster"><div class="knob"></div></div></div>
+    <div class="setrow"><span>Text size</span><div class="fsbtns"><button id="fsMinus" aria-label="Smaller text">A−</button><button id="fsPlus" aria-label="Larger text">A+</button></div></div>
+    <div class="srchead">Active sources <span>(tap to enable/disable)</span></div>
     <div class="srcgrid" id="srcGrid"></div>
-    <button class="closebtn" id="setClose">Terminé</button>
+    <button class="closebtn" id="setClose">Done</button>
   </div>
 </div>
 
@@ -241,10 +504,10 @@
 <div id="glpop" class="glpop"></div>
 <div id="toast" class="toast"></div>
 <div class="podbar" id="podbar"><div class="pt"></div><button id="podStop">Stop</button></div>
-<div class="modal" id="archModal"><div class="sheet"><h3>Archives</h3><div id="archBody"></div><button class="closebtn" id="archClose">Fermer</button></div></div>
+<div class="modal" id="archModal"><div class="sheet"><h3>Archives</h3><div id="archBody"></div><button class="closebtn" id="archClose">Close</button></div></div>
 
 <script>
-/* ================= Sources ================= */
+/* ================= Feeds ================= */
 var FEEDS=[
   {url:"https://www.jeuxvideo.com/rss/rss-news.xml",name:"jeuxvideo.com",cat:"actu",lang:"fr"},
   {url:"https://gamekult.com/feed.xml",name:"Gamekult",cat:"actu",lang:"fr"},
@@ -286,13 +549,7 @@ var CONTAINERS={
   'gameblog.fr':'.article-content'
 };
 var AD_SELECTORS='[class*="ad-"],[class*="-ad"],[class*="ads"],[class*="advert"],[class*="optidigital"],[class*="od-wrapper"],[class*="taboola"],[class*="outbrain"],[class*="mc4wp"],[class*="newsletter"],[class*="related"],[class*="share"],[class*="social"],[class*="sponsor"],[class*="promo"],[class*="interlude"],[class*="most-read"],[class*="most-popular"],[class*="partner"],[class*="affiliate"],[class*="paywall"],[class*="comment"],[id*="ad-"],[id*="ads"],[id*="taboola"],[id*="outbrain"],[data-testid*="ad"]';
-/* ================= Version / mises à jour ================= */
-// À bumper ENSEMBLE à chaque release : APP_VERSION (ici), versionName (AndroidManifest.xml)
-// et $appVersion (GamingDaily.ps1).
-var APP_VERSION='1.0.0';
-var GITHUB_REPO='wk0t/GamingDaily';
-var PC_UPDATE=null;               // côté PC uniquement (calculé par PowerShell) ; sur Android on interroge l'API GitHub
-/* ================= Réglages / état persistant ================= */
+/* ================= Settings / persisted state ================= */
 function lsGet(k,def){try{var v=localStorage.getItem(k);return v==null?def:JSON.parse(v);}catch(e){return def;}}
 function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 var SETTINGS=lsGet('gmd_settings',{translate:true,cluster:true,fontScale:1,disabled:[]});
@@ -300,12 +557,18 @@ var READ=lsGet('gmd_read',{});          // link -> 1
 var FAV=lsGet('gmd_fav',{});            // link -> snapshot
 var TOPICS=lsGet('gmd_topics',[]);      // ['ransomware', ...]
 document.documentElement.style.setProperty('--fs',SETTINGS.fontScale||1);
-/* ================= Filtres (repli sans accents) ================= */
-function fold(s){return (s||'').replace(/[‘’ʼ]/g,"'").normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+/* ================= Filters (accent-insensitive folding) =================
+   Keyword lists below intentionally mix French and English: they match
+   story text *before* translation, and our feeds are bilingual. */
+function fold(s){return (s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();}
+/* Keyword lists are intentionally bilingual (FR + EN): they match feed titles before the on-the-fly translation, so French outlets are still categorised correctly. */
 var BLOCK_LINK=['/bons-plans/','/bon-plan','/deals/','/promo','/coupon','/soldes','/wikis-soluces','/soluce','/astuces/','/guides/','/tips/','/guide/'];
+/* Keyword lists are intentionally bilingual (FR + EN): they match feed titles before the on-the-fly translation, so French outlets are still categorised correctly. */
 var BLOCK_TITLE=['bon plan','bons plans','soldes','promo','reduction','remise','prix casse','moins cher','pas cher','meilleur prix','a prix','french days','black friday','prime day','cyber monday','ventes flash','vente flash','code promo','cashback','destockage','sans payer','en stock','trouver du stock','ou acheter','bon d achat','% de reduction','-20%','-30%','-40%','-50%','-60%','-70%','horoscope','guide d achat','meilleures offres','offre du jour','le deal ','les deals','soluce','notre guide complet','ou trouver','comment obtenir','comment debloquer','comment avoir','comment battre','tier list','codes actifs','tous les codes','emplacement de','emplacements de','tous les secrets','toutes les recompenses','wiki '];
+/* Keyword lists are intentionally bilingual (FR + EN): they match feed titles before the on-the-fly translation, so French outlets are still categorised correctly. */
 var TOPIC=['jeu ','jeux','game','gaming','gamer','joueur','player','video game','videogame','console','manette','gamepad','playstation','ps5','ps6','ps4','psn','ps plus','dualsense','xbox','game pass','series x','series s','nintendo','switch','joy-con','wii','3ds','game boy','gamecube','steam','valve','epic games','gog','steam deck','rog ally','portable','studio','editeur','developpeur','developer','ubisoft','electronic arts',' ea ','activision','blizzard','rockstar','bethesda','capcom','sega','square enix','bandai','konami','fromsoftware','naughty dog','insomniac','cd projekt','larian','riot','bungie','remedy','kojima','miyamoto','fortnite','minecraft','roblox','gta','zelda','mario','pokemon','kirby','metroid','call of duty','battlefield','fifa','ea sports','valorant','league of legends','overwatch','apex','diablo','final fantasy','resident evil','assassin','elden ring','dark souls','baldur','starfield','cyberpunk','witcher','halo','god of war','last of us','horizon','spider-man','silksong','hollow knight','stardew','terraria','doom','half-life','portal','counter-strike','cs2','dota','monster hunter','dragon ball','naruto','street fighter','tekken','mortal kombat','smash bros','animal crossing','splatoon','fire emblem','persona','yakuza','metal gear','sonic','crash','gameplay','trailer','bande-annonce','dlc','extension','season pass','battle pass','early access','acces anticipe','beta','demo','remake','remaster','portage','exclusivite','sortie du jeu','date de sortie','test du jeu','review','preview','patch','mise a jour','maj ','update','esport','e-sport','tournoi','twitch','streamer','speedrun','speedrunner','emulateur','emulation','homebrew','jailbreak','custom firmware','cfw','romhack','rom ','flashcart','retrogaming','retro','mod ','mods','modding','moddeur','fan game','datamine','free-to-play','f2p','pay-to-win','microtransaction','lootbox','loot box','gacha','skin','cross-play','crossplay','multijoueur','multiplayer','coop','pvp','pve','mmo','moba','fps','rpg','jrpg','metroidvania','roguelike','roguelite','soulslike','battle royale','open world','monde ouvert','vr ','realite virtuelle','psvr','cloud gaming','geforce now','luna','carte graphique','gpu','nvidia','geforce','rtx','radeon','ryzen','dlss','fsr','ray tracing','directx','unreal engine','unity','godot','moteur de jeu','framerate',' fps','60 fps','120 fps'];
 var JUNK_PARA=['lire aussi','a lire egalement','a lire :','a lire aussi','sur le meme sujet','sur le meme theme','a decouvrir aussi','voir aussi :','dans la meme rubrique','notre dossier complet','notre comparatif','abonnez-vous','abonne-toi','inscrivez-vous a','notre newsletter','la newsletter','recevez chaque','recevez toute l actualite','recevez le meilleur','suivez-nous sur','suivez nous sur','rejoignez-nous','rejoignez notre','partagez cet article','partager sur','partager cet article','cliquez ici pour','laisser un commentaire','votre adresse e-mail','votre adresse email','pour aller plus loin','cet article vous a plu','soutenez-nous','faire un don','sur patreon','sur tipeee','en partenariat avec','article sponsorise','contenu sponsorise','politique de confidentialite','gerer mes cookies','accepter les cookies','tous droits reserves','credit photo','credits photo','telechargez l application','notre application','meilleurs vpn','notre guide d achat','code promo','read more:','also read:','you might also','you may also','related articles','related stories','related reading','recommended for you','sign up for','subscribe to','our newsletter','follow us on','share this article','leave a comment','all rights reserved','found this article interesting','advertisement','sponsored content','sponsored by','in partnership with','this article originally appeared','trending now','most popular','more from','join the conversation','click here to','continue reading'];
+/* Keyword lists are intentionally bilingual (FR + EN): they match feed titles before the on-the-fly translation, so French outlets are still categorised correctly. */
 var KW={
   modding:['homebrew','jailbreak','custom firmware',' cfw ','hack de la','hackee','moddee','emulateur','emulation','emulator','romhack','rom hack','flashcart','linker','atmosphere','luma3ds','retroarch','mister fpga','everdrive','fan game','fan-game','patch fr','traduction de fan','decompilation','retro-ingenierie','reverse engineering','retrogaming','retro gaming','console retro','preservation des jeux','datamine','dataminee','moddeur','modders','mods ',' mod ','modding','overclocking de console','portage non officiel','unofficial port'],
   esport:['esport','e-sport','tournoi','competitif','competition','lec ','lfl ','worlds','major de','dreamhack',' evo ','cash prize','equipe professionnelle','joueur professionnel','pro player','championnat du monde','coupe du monde de','qualifier','bootcamp','karmine','vitality','gentle mates','t1 ','g2 esports','faker'],
@@ -329,11 +592,11 @@ function isJunkPara(txt){
   return false;
 }
 function getCat(base,text){
-  var t=fold(text),order=['modding','esport','console','pc'];
+  var t=fold(text),order=['cyber','ia','hard'];
   for(var o=0;o<order.length;o++){var ws=KW[order[o]];for(var i=0;i<ws.length;i++) if(t.indexOf(ws[i])>=0) return order[o];}
   return base;
 }
-/* ================= Pont natif ================= */
+/* ================= Native bridge ================= */
 var PENDING={},FID=1;
 function bridgeFetch(url){
   return new Promise(function(res){
@@ -349,8 +612,8 @@ function onFetchDone(id,b64){
   clearTimeout(p.timer);delete PENDING[id];
   try{var bin=atob(b64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);p.res(new TextDecoder('utf-8').decode(arr));}catch(e){p.res('');}
 }
-/* ================= Traduction ================= */
-function gtxUrl(q){return 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q='+encodeURIComponent(q);}
+/* ================= Translation (to English) ================= */
+function gtxUrl(q){return 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q='+encodeURIComponent(q);}
 function translateChunk(arr){
   if(!arr.length) return Promise.resolve([]);
   return bridgeFetch(gtxUrl(arr.join('\n[[[0]]]\n'))).then(function(raw){
@@ -364,13 +627,13 @@ function translateTexts(texts){
   var result=[];
   return chunks.reduce(function(pr,ch){return pr.then(function(){return translateChunk(ch);}).then(function(tr){result=result.concat(tr);});},Promise.resolve()).then(function(){return result;});
 }
-/* ================= Synthèse vocale ================= */
+/* ================= Text-to-speech ================= */
 var speaking=false;
 function speak(text){
   stopSpeak();
   if(window.AndroidBridge&&AndroidBridge.speak){AndroidBridge.speak(text);speaking=true;return;}
   if(window.speechSynthesis){
-    var u=new SpeechSynthesisUtterance(text);u.lang='fr-FR';u.rate=1;
+    var u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=1;
     u.onend=function(){speaking=false;syncTtsBtns();};
     speechSynthesis.speak(u);speaking=true;
   }
@@ -384,23 +647,23 @@ function syncTtsBtns(){
   var b=document.getElementById('ttsAllBtn');if(b)b.classList.toggle('on',speaking);
   var rb=document.getElementById('rTts');if(rb)rb.classList.toggle('on',speaking);
 }
-/* ================= Astuce du jour ================= */
+/* ================= Tip of the day ================= */
 var TIPS=[
-  {t:"Active Steam Guard et la 2FA sur tes comptes de jeu",x:"Les comptes Steam, Epic, PSN ou Xbox pleins de jeux et de skins sont des cibles de choix. La double authentification (appli mobile) bloque la quasi-totalité des vols de compte, même si ton mot de passe fuite."},
-  {t:"Ne précommande pas à l’aveugle",x:"Attends les tests et les retours des joueurs le jour de la sortie. Les bonus de précommande sont rarement intéressants, et un jeu cassé au lancement se corrige (ou pas) des mois plus tard."},
-  {t:"Sauvegarde tes parties, pas seulement dans le cloud",x:"Steam Cloud peut écraser une sauvegarde corrompue. Copie de temps en temps tes dossiers de saves sur un disque externe — surtout avant d’installer des mods."},
-  {t:"Les skins « gratuits », c’est presque toujours une arnaque",x:"Générateurs de V-Bucks, sites de skins CS2, cadeaux Discord : ce sont des pièges à identifiants. Aucun site tiers ne peut te donner de la monnaie de jeu gratuite."},
-  {t:"Joue en filaire pour réduire le lag",x:"Un câble Ethernet élimine les pertes de paquets du Wi-Fi et stabilise ton ping. Si c’est impossible, rapproche-toi de la box ou passe en Wi-Fi 5 GHz/6 GHz, et évite les téléchargements pendant tes parties."},
-  {t:"Mets à jour tes pilotes graphiques",x:"NVIDIA et AMD publient des pilotes optimisés pour chaque grosse sortie, avec parfois +10 à 20 % de performances. GeForce Experience ou AMD Adrenalin le font en deux clics."},
-  {t:"Compare les prix avant d’acheter",x:"IsThereAnyDeal.com te montre l’historique des prix d’un jeu sur toutes les boutiques officielles. La plupart des jeux sont à −50 % moins d’un an après leur sortie."},
-  {t:"Méfie-toi des sites de clés pas chères",x:"Les clés du marché gris sont parfois achetées avec des cartes volées : l’éditeur peut les révoquer et tu perds le jeu. Privilégie les vendeurs officiels ou les soldes."},
-  {t:"Installe tes jeux sur un SSD",x:"Les temps de chargement fondent et certains jeux récents streament leurs textures depuis le disque : sur un HDD, ça rame. Garde le SSD pour les jeux auxquels tu joues, archive le reste."},
-  {t:"Dépoussière ta console et ton PC",x:"La poussière fait chauffer, et la chauffe fait baisser les performances (throttling) voire planter. Un coup de soufflette tous les 6 mois dans les aérations prolonge la vie de ta machine."},
-  {t:"Active le VRR si ton écran le permet",x:"G-Sync, FreeSync ou VRR HDMI 2.1 synchronisent l’écran avec le jeu : fini les déchirures d’image et les saccades, même quand le framerate varie. Ça se règle une fois et ça change tout."},
-  {t:"Modding : sauvegarde d’abord, et télécharge au bon endroit",x:"Avant d’installer des mods, copie tes saves et note ta version du jeu. Passe par des plateformes connues comme Nexus Mods ou le Workshop Steam — les .exe de mods inconnus cachent parfois des malwares."},
-  {t:"Jailbreak et CFW : jamais avec ta console principale",x:"Modifier une console connectée au réseau (PSN, eShop, Xbox Live), c’est le ban définitif du compte assuré. Les bidouilleurs utilisent une console dédiée, hors ligne, et gardent leurs achats ailleurs."},
-  {t:"Désactive l’achat en un clic sur les stores",x:"Entre les monnaies virtuelles, les lootboxes et les DLC, la facture grimpe vite. Exige un mot de passe pour chaque achat — indispensable si des enfants jouent sur ta machine."},
-  {t:"Limite le crossplay si tu subis les tricheurs",x:"Sur console, beaucoup de jeux permettent de désactiver le jeu croisé avec PC : tu affrontes alors uniquement des joueurs manette, où les cheats aimbot/wallhack sont beaucoup plus rares."}
+  {t:"Turn on Steam Guard and 2FA on your game accounts",x:"Steam, Epic, PSN and Xbox accounts full of games and skins are prime targets. Two-factor authentication (mobile app) blocks almost every account theft, even if your password leaks."},
+  {t:"Don't pre-order blind",x:"Wait for reviews and player feedback on launch day. Pre-order bonuses are rarely worth it, and a broken launch game gets fixed (or not) months later."},
+  {t:"Back up your saves, not just to the cloud",x:"Steam Cloud can overwrite a corrupted save. Now and then, copy your save folders to an external drive — especially before installing mods."},
+  {t:"'Free' skins are almost always a scam",x:"Free V-Bucks generators, CS2 skin sites, Discord gifts: they are credential traps. No third-party site can hand out free in-game currency."},
+  {t:"Go wired to reduce lag",x:"An Ethernet cable removes Wi-Fi packet loss and stabilizes your ping. If that's impossible, move closer to the router or switch to 5 GHz / 6 GHz Wi-Fi, and avoid downloads during your games."},
+  {t:"Keep your graphics drivers up to date",x:"NVIDIA and AMD ship drivers optimized for each big release, sometimes worth +10 to 20% performance. GeForce Experience or AMD Adrenalin do it in two clicks."},
+  {t:"Compare prices before buying",x:"IsThereAnyDeal.com shows a game's price history across every official store. Most games hit -50% within a year of release."},
+  {t:"Beware of too-cheap key sites",x:"Grey-market keys are sometimes bought with stolen cards: the publisher can revoke them and you lose the game. Stick to official sellers or sales."},
+  {t:"Install your games on an SSD",x:"Loading times collapse, and some recent games stream their textures straight from disk: on an HDD, it stutters. Keep the SSD for the games you actually play, archive the rest."},
+  {t:"Dust out your console and PC",x:"Dust causes heat, and heat lowers performance (throttling) or crashes the machine. A blast of compressed air into the vents every six months extends its life."},
+  {t:"Enable VRR if your screen supports it",x:"G-Sync, FreeSync or HDMI 2.1 VRR sync the display with the game: no more screen tearing or stutter, even when the framerate moves. Set it once, it changes everything."},
+  {t:"Modding: back up first, and download from the right place",x:"Before installing mods, copy your saves and note your game version. Use known platforms like Nexus Mods or the Steam Workshop — .exe files from unknown mods sometimes hide malware."},
+  {t:"Jailbreak and custom firmware: never on your main console",x:"Modifying a console that is connected to online services (PSN, eShop, Xbox Live) almost guarantees a permanent account ban. Tinkerers keep a dedicated, offline console and do their purchases elsewhere."},
+  {t:"Disable one-click purchases on the stores",x:"Between virtual currencies, loot boxes and DLC, the bill climbs fast. Require a password for every purchase — essential if kids play on your machine."},
+  {t:"Limit cross-play if you keep running into cheaters",x:"On console, many games let you turn off cross-play with PC: you then face only controller players, where aimbot and wallhack cheats are far rarer."}
 ];
 (function(){
   var start=new Date(new Date().getFullYear(),0,0);
@@ -408,19 +671,21 @@ var TIPS=[
   var tip=TIPS[day%TIPS.length];
   document.getElementById('tipTitle').textContent=tip.t;
   document.getElementById('tipText').textContent=tip.x;
-  document.getElementById('todaySub').textContent=new Date().toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('todaySub').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 })();
-/* ================= Modèle / rendu ================= */
+/* ================= Model / rendering ================= */
 var ALL=[],CURRENT='all',QUERY='';
-var CAT_LABEL={actu:"Actu",console:"Consoles",pc:"PC",modding:"Modding",esport:"Esport"};
-var CAT_ICON={actu:"Pas d’image",console:"Pas d’image",pc:"Pas d’image",modding:"Pas d’image",esport:"Pas d’image"};
+var CAT_LABEL={actu:"News",console:"Consoles",pc:"PC",modding:"Modding",esport:"Esports"};
+var NOIMG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>';
+var PIN='<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>';
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
+function imgFallback(el){el.parentNode.innerHTML="<div class='noimg'>"+NOIMG+"</div>";}
 function timeAgo(iso){
   if(!iso)return"";var d=new Date(iso);if(isNaN(d))return"";
   var s=(Date.now()-d.getTime())/1000;
-  if(s<3600)return"il y a "+Math.max(1,Math.round(s/60))+" min";
-  if(s<86400)return"il y a "+Math.round(s/3600)+" h";
-  var days=Math.round(s/86400);return days<=1?"hier":"il y a "+days+" j";
+  if(s<3600)return Math.max(1,Math.round(s/60))+" min ago";
+  if(s<86400)return Math.round(s/3600)+" h ago";
+  var days=Math.round(s/86400);return days<=1?"yesterday":days+" d ago";
 }
 function readMins(a){
   if(a.mins)return a.mins;
@@ -484,7 +749,7 @@ function parseFeed(xml,feed){
   }
   return out;
 }
-/* ---- extraction corps ---- */
+/* ---- body extraction ---- */
 function absUrl(u,base){if(!u)return'';if(/^https?:\/\//.test(u))return u;if(u.indexOf('//')===0)return'https:'+u;if(u.charAt(0)==='/'){var m=base.match(/^(https?:\/\/[^\/]+)/);if(m)return m[1]+u;}return'';}
 function ogImage(html){
   if(!html)return'';
@@ -529,7 +794,7 @@ function extractFromPage(html,link){
   if(!root)root=doc.querySelector('.entry-content,.article-content,.post-content,.article-body,.post-body')||doc.body;
   return blocksFromRoot(root,link);
 }
-/* ---- regroupement des doublons ---- */
+/* ---- duplicate clustering ---- */
 function titleTokens(t){var f=fold(t).replace(/[^a-z0-9 ]/g,' ').split(/\s+/).filter(function(w){return w.length>3;});var s={};f.forEach(function(w){s[w]=1;});return Object.keys(s);}
 function jaccard(a,b){if(!a.length||!b.length)return 0;var setb={};b.forEach(function(w){setb[w]=1;});var inter=0;a.forEach(function(w){if(setb[w])inter++;});return inter/(a.length+b.length-inter);}
 function cluster(list){
@@ -544,42 +809,42 @@ function cluster(list){
   }
   return list.filter(function(a,i){return !used[i];});
 }
-/* ================= Rendu ================= */
+/* ================= Rendering ================= */
 var grid=document.getElementById('grid'),statusEl=document.getElementById('status');
 function visibleList(){
   var list;
   if(CURRENT==='fav'){list=Object.keys(FAV).map(function(k){return FAV[k];});}
-  else {list=ALL.filter(function(a){return (CURRENT==='all'||a.cat===CURRENT)&&SETTINGS.disabled.indexOf(a.source)<0;});}
+  else {list=ALL.filter(function(a){return CURRENT==='all'||a.cat===CURRENT;});}
   if(QUERY){var q=fold(QUERY);list=list.filter(function(a){return fold(a.title+' '+a.excerpt+' '+a.source).indexOf(q)>=0;});}
-  // épingle les sujets suivis en tête (tri stable)
+  // pin tracked topics to the top (stable sort)
   if(CURRENT!=='fav'){
     var dec=list.map(function(a,i){return {a:a,i:i,p:(TOPICS.length&&matchesTopics(a))?1:0,s:severityOf(a),b:sourceBoost(a)};});
     dec.sort(function(x,y){return (y.p-x.p)||(y.s-x.s)||(y.b-x.b)||(x.i-y.i);});
     list=dec.map(function(o){return o.a;});
   }
-  updateMenace();
+  updateHype();
   return list;
 }
 function cardHtml(a){
-  var b=a.cat||'actu';
+  var b=a.cat||'tech';
   var isFav=!!FAV[a.link],isRead=!!READ[a.link],isPin=(TOPICS.length&&matchesTopics(a)&&CURRENT!=='fav');var sv=severityOf(a);
-  var thumb=a.img?"<img src='"+esc(a.img)+"' loading='lazy' referrerpolicy='no-referrer' alt='' onerror=\"this.parentNode.innerHTML='<div class=\\'noimg\\'>"+(CAT_ICON[b]||'')+"</div>'\">":"<div class='noimg'>"+(CAT_ICON[b]||'')+"</div>";
-  var tr=a.translated?"<span class='tr'>· traduit</span>":"";
-  var rel=(a.related&&a.related.length)?"<span class='relnote'>+ "+a.related.length+" source"+(a.related.length>1?'s':'')+"</span>":"";
+  var thumb=a.img?"<img src='"+esc(a.img)+"' loading='lazy' referrerpolicy='no-referrer' alt='' onerror=\"imgFallback(this)\">":"<div class='noimg'>"+NOIMG+"</div>";
+  var tr=a.translated?" <span class='tr'>· translated</span>":"";
+  var rel=(a.related&&a.related.length)?"<span class='relnote'>+"+a.related.length+" source"+(a.related.length>1?'s':'')+"</span>":"";
   return "<a class='card"+(isRead?' read':'')+(isPin?' pin':'')+(sv===2?' crit':'')+"' data-link='"+esc(a.link)+"'>"+
-    "<div class='thumb'><span class='badge b-"+b+"'>"+(CAT_LABEL[b]||'News')+"</span>"+thumb+
-      "<button class='heart"+(isFav?' on':'')+"' data-fav='"+esc(a.link)+"'>"+(isFav?'♥':'♡')+"</button>"+
-      (isPin?"<span class='pinstar'>Suivi</span>":"")+"</div>"+
-    "<div class='body'><div class='src'><span class='name'>"+(sv===2?"<span class='alertpill'>À la une</span>":"")+esc(a.source)+tr+"</span><span class='meta'>"+readMins(a)+" min · "+timeAgo(a.date)+"</span></div>"+
+    "<div class='thumb'><span class='badge b-"+b+"'><i class='cdot'></i>"+(CAT_LABEL[b]||'News')+"</span>"+thumb+
+      "<button class='heart"+(isFav?' on':'')+"' data-fav='"+esc(a.link)+"' aria-label='Save story'>"+(isFav?'♥':'♡')+"</button>"+
+      (isPin?"<span class='pinstar' title='Tracked topic'>"+PIN+"</span>":"")+"</div>"+
+    "<div class='body'><div class='meta'><span class='lft'><span class='cat'><i class='cdot c-"+b+"'></i>"+(CAT_LABEL[b]||'News')+"</span>"+(sv===2?"<span class='alertpill'>ALERT</span>":"")+"<span>"+timeAgo(a.date)+"</span></span><span>"+readMins(a)+" min read</span></div>"+
     "<h3>"+markText(a.title)+"</h3><p class='excerpt'>"+esc(a.excerpt)+(a.excerpt&&a.excerpt.length>=180?'…':'')+"</p>"+
-    "<div class='src'>"+rel+"<span class='go'>Lire ici →</span></div></div></a>";
+    "<div class='meta foot'><span class='srcname'>"+esc(a.source)+tr+"</span>"+rel+"</div></div></a>";
 }
 function render(){
   var list=visibleList();
-  document.getElementById('count').textContent=list.length+' article'+(list.length>1?'s':'')+(CURRENT==='fav'?' en favori':'');
+  document.getElementById('count').textContent=list.length+' stor'+(list.length===1?'y':'ies')+(CURRENT==='fav'?' saved':'');
   if(!list.length){
     grid.innerHTML='';statusEl.style.display='block';
-    statusEl.innerHTML=CURRENT==='fav'?"<div class='big'>Aucun favori</div><div>Touche le ♡ d’un article pour le sauvegarder.</div>":(ALL.length?"<div class='big'>Aucun article</div><div>Essaie une autre rubrique ou recherche.</div>":"<div class='big'>Aucune news chargée</div><div>Vérifie ta connexion puis appuie sur ⟳</div>");
+    statusEl.innerHTML=CURRENT==='fav'?"<div class='big'>No saved stories</div><div class='hint'>Tap the heart on a story to keep it here.</div>":(ALL.length?"<div class='big'>Nothing in this section</div><div class='hint'>Try another filter or search.</div>":"<div class='big'>No stories loaded</div><div class='hint'>Check your connection, then tap the refresh button.</div>");
     return;
   }
   statusEl.style.display='none';
@@ -589,33 +854,38 @@ function renderDigest(){
   var d=document.getElementById('digest'),ol=document.getElementById('digestList');
   if(!ALL.length){d.style.display='none';return;}
   var top=ALL.slice(0,3);
-  ol.innerHTML=top.map(function(a){return "<li data-link='"+esc(a.link)+"'><b>"+esc(a.title)+"</b> <span>— "+esc(a.source)+"</span></li>";}).join('');
+  ol.innerHTML=top.map(function(a){return "<li data-link='"+esc(a.link)+"'><div><b>"+esc(a.title)+"</b><span>"+esc(a.source)+"</span></div></li>";}).join('');
   d.style.display='block';
 }
 function renderTopics(){
   var el=document.getElementById('topics');
-  var h="<span class='tlab'>Sujets suivis :</span>";
+  var h="<span class='tlab'>Tracked:</span>";
   TOPICS.forEach(function(kw){h+="<span class='topic'>"+esc(kw)+"<b data-deltopic='"+esc(kw)+"'>✕</b></span>";});
-  h+="<span class='topic-add' id='addTopic'>+ suivre un sujet</span>";
+  h+="<button class='topic-add' id='addTopic'>+ track a topic</button>";
   el.innerHTML=h;
 }
 function showSkeletons(){
   statusEl.style.display='none';
-  grid.innerHTML=Array.apply(null,Array(4)).map(function(){return "<div class='skeleton'><div class='sk img'></div><div class='sk line'></div><div class='sk line'></div><div class='sk line s'></div></div>";}).join('');
+  var row="<div class='skeleton'><div><div class='sk line w60'></div><div class='sk title'></div><div class='sk line'></div><div class='sk line w40'></div></div><div class='sk thumb'></div></div>";
+  var hero="<div class='skeleton'><div class='sk thumb'></div><div><div class='sk line w40'></div><div class='sk title'></div><div class='sk line'></div></div></div>";
+  grid.innerHTML=hero+row+row+row;
 }
-/* ================= Lecture intégrée ================= */
+/* ================= Built-in reader ================= */
 var backdrop=document.getElementById('readerBackdrop'),readerEl=document.getElementById('reader');
 var readerOpen=false,readerCur=null;
 function baseU(u){return(u||'').split('?')[0].replace(/-\d+x\d+(\.\w+)$/,'$1');}
 function findByLink(link){for(var i=0;i<ALL.length;i++){if(ALL[i].link===link)return ALL[i];}if(FAV[link])return FAV[link];return null;}
 function renderReader(a){
   var isFav=!!FAV[a.link];
-  var h='<div class="rbar"><button class="rbtn" onclick="closeReader()">✕</button><div class="rgroup">'+
-    '<button class="rbtn'+(speaking?' on':'')+'" id="rTts" onclick="toggleReadAloud()">Écouter</button>'+
-    '<button class="rbtn" onclick="shareArticle(readerCur)" title="Partager">↗</button>'+'<button class="rbtn" onclick="voteSource(readerCur.source,1);toast(\'Plus de \'+readerCur.source)" title="Plus de cette source">+</button>'+'<button class="rbtn" onclick="voteSource(readerCur.source,-1);toast(\'Moins de \'+readerCur.source)" title="Moins de cette source">−</button>'+'<button class="rbtn fav'+(isFav?' on':'')+'" onclick="toggleFav(readerCur)">'+(isFav?'♥':'♡')+'</button></div></div>';
-  h+='<div class="rmeta"><span class="badge b-'+(a.cat||'actu')+'">'+(CAT_LABEL[a.cat]||'News')+'</span><span class="rsrc">'+esc(a.source)+'</span><span>'+timeAgo(a.date)+'</span>'+(a.translated?'<span class="tr">traduit</span>':'')+'</div>';
+  var h='<div class="rbar"><button class="rbtn" onclick="closeReader()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button><div class="rgroup">'+
+    '<button class="rbtn'+(speaking?' on':'')+'" id="rTts" onclick="toggleReadAloud()" title="Read aloud" aria-label="Read aloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>'+
+    '<button class="rbtn" onclick="shareArticle(readerCur)" title="Share" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg></button>'+
+    '<button class="rbtn" onclick="voteSource(readerCur.source,1);toast(\'More from \'+readerCur.source)" title="More from this source" aria-label="More from this source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>'+
+    '<button class="rbtn" onclick="voteSource(readerCur.source,-1);toast(\'Less from \'+readerCur.source)" title="Less from this source" aria-label="Less from this source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12h14"/></svg></button>'+
+    '<button class="rbtn fav'+(isFav?' on':'')+'" onclick="toggleFav(readerCur)" aria-label="Save story">'+(isFav?'♥':'♡')+'</button></div></div>';
+  h+='<div class="rmeta"><span class="badge b-'+(a.cat||'tech')+'"><i class="cdot"></i>'+(CAT_LABEL[a.cat]||'News')+'</span><span class="rsrc">'+esc(a.source)+'</span><span>'+timeAgo(a.date)+'</span>'+(a.translated?'<span class="tr">translated</span>':'')+'</div>';
   h+='<h2 class="rtitle">'+markText(a.title)+'</h2>';
-  h+='<div class="rtime">'+readMins(a)+' min de lecture</div>';
+  h+='<div class="rtime">'+readMins(a)+' min read</div>';
   if(a.img)h+='<img src="'+esc(a.img)+'" referrerpolicy="no-referrer" onerror="this.remove()">';
   var seen=[baseU(a.img)];
   if(a.blocks&&a.blocks.length){
@@ -624,21 +894,20 @@ function renderReader(a){
       else if(bk.t==='h'){h+='<h3>'+markText(bk.v)+'</h3>';}
       else{h+='<p>'+markText(bk.v)+'</p>';}
     });
-    if(SETTINGS.translate&&a.lang==='en'&&!a.bodyTranslated){h+='<div class="rload">Traduction en cours…</div>';}
+    if(a.lang!=='en'&&!a.bodyTranslated){h+='<div class="rload">Translating…</div>';}
   } else if(a.blocks!==null){
-    h+='<p>'+esc(a.excerpt)+'…</p><p class="rnote">Le contenu complet n’a pas pu être extrait — ouvre l’article sur le site d’origine ci-dessous.</p>';
-  } else { h+='<div class="rload">Chargement de l’article…</div>'; }
+    h+='<p>'+esc(a.excerpt)+'…</p><p class="rnote">The full text could not be extracted — open the original story below.</p>';
+  } else { h+='<div class="rload">Loading story…</div>'; }
   if(a.related&&a.related.length){
-    h+='<div class="rrelated"><div class="rl">Aussi couvert par</div>';
-    a.related.forEach(function(r){h+='<a href="'+esc(r.link)+'" target="_blank">'+esc(r.source)+' ↗</a>';});
+    h+='<div class="rrelated"><div class="rl">Also covered by</div>';
+    a.related.forEach(function(r){h+='<a href="'+esc(r.link)+'" target="_blank" rel="noopener">'+esc(r.source)+' ↗</a>';});
     h+='</div>';
   }
-  h+='<br><a class="rsource" href="'+esc(a.link)+'" target="_blank">Source : '+esc(a.source)+' ↗</a>';
+  h+='<br><a class="rsource" href="'+esc(a.link)+'" target="_blank" rel="noopener">Open source: '+esc(a.source)+' ↗</a>';
   readerEl.innerHTML=h;enhanceReader();
 }
 function translateBody(a,done){
-  if(!SETTINGS.translate){done();return;}   // respecte le réglage « Traduire les news anglaises »
-  if(a.lang!=='en'||a.bodyTranslated||!a.blocks||!a.blocks.length){done();return;}
+  if(a.lang==='en'||a.bodyTranslated||!a.blocks||!a.blocks.length){done();return;}
   var idx=[],texts=[];a.blocks.forEach(function(b,i){if(b.t!=='img'){idx.push(i);texts.push(b.v);}});
   if(!texts.length){a.bodyTranslated=true;done();return;}
   translateTexts(texts).then(function(tr){for(var m=0;m<idx.length&&m<tr.length;m++){a.blocks[idx[m]].v=tr[m];}a.bodyTranslated=true;a.translated=true;done();});
@@ -664,7 +933,7 @@ function toggleReadAloud(){
   else parts.push(a.excerpt);
   speak(parts.join('. '));syncTtsBtns();
 }
-/* ================= Favoris / sujets ================= */
+/* ================= Saved stories / tracked topics ================= */
 function snapshot(a){return{title:a.title,link:a.link,excerpt:a.excerpt,img:a.img,source:a.source,cat:a.cat,date:a.date,lang:a.lang,translated:a.translated,blocks:a.bodyTranslated?a.blocks:null,bodyTranslated:a.bodyTranslated,rawFull:'',related:a.related||null,mins:a.mins||0,_plain:a._plain||''};}
 function toggleFav(a){
   if(!a)return;
@@ -674,22 +943,22 @@ function toggleFav(a){
   render();
 }
 function addTopic(){
-  var kw=prompt('Suivre un sujet (ex : Zelda, PS5, GTA 6, speedrun) :');
+  var kw=prompt('Track a topic (e.g. ransomware, iPhone, AI):');
   if(kw==null)return;kw=kw.trim();if(!kw)return;
   if(TOPICS.map(function(x){return x.toLowerCase();}).indexOf(kw.toLowerCase())<0){TOPICS.push(kw);lsSet('gmd_topics',TOPICS);}
   renderTopics();render();
 }
 function delTopic(kw){TOPICS=TOPICS.filter(function(x){return x!==kw;});lsSet('gmd_topics',TOPICS);renderTopics();render();}
-/* ================= Réglages ================= */
+/* ================= Settings ================= */
 function openSettings(){
   document.getElementById('tgTranslate').classList.toggle('on',SETTINGS.translate);
   document.getElementById('tgCluster').classList.toggle('on',SETTINGS.cluster);
   var g=document.getElementById('srcGrid');
-  g.innerHTML=FEEDS.map(function(f){var on=SETTINGS.disabled.indexOf(f.name)<0;return "<span class='srctag"+(on?' on':'')+"' data-src='"+esc(f.name)+"'>"+esc(f.name)+"</span>";}).join('');
+  g.innerHTML=FEEDS.map(function(f){var on=SETTINGS.disabled.indexOf(f.name)<0;return "<button class='srctag"+(on?' on':'')+"' data-src='"+esc(f.name)+"'>"+esc(f.name)+"</button>";}).join('');
   document.getElementById('setModal').classList.add('open');
 }
 function closeSettings(){document.getElementById('setModal').classList.remove('open');}
-/* ================= Événements ================= */
+/* ================= Events ================= */
 document.getElementById('search').addEventListener('input',function(e){QUERY=e.target.value;render();});
 document.getElementById('filters').addEventListener('click',function(e){
   var c=e.target.closest('.chip');if(!c)return;
@@ -719,16 +988,15 @@ document.getElementById('srcGrid').addEventListener('click',function(e){
   var name=t.getAttribute('data-src');var i=SETTINGS.disabled.indexOf(name);
   if(i<0)SETTINGS.disabled.push(name);else SETTINGS.disabled.splice(i,1);
   lsSet('gmd_settings',SETTINGS);t.classList.toggle('on',SETTINGS.disabled.indexOf(name)<0);
-  render();
 });
 document.getElementById('ttsAllBtn').addEventListener('click',function(){
   if(speaking){stopSpeak();return;}
   var top=ALL.slice(0,5);if(!top.length)return;
-  var txt='Voici les infos à retenir. '+top.map(function(a,i){return (i+1)+'. '+a.title+'.';}).join(' ');
+  var txt="Here are today's top stories. "+top.map(function(a,i){return (i+1)+'. '+a.title+'.';}).join(' ');
   speak(txt);syncTtsBtns();
 });
 document.getElementById('refreshBtn').addEventListener('click',load);
-/* ================= Chargement ================= */
+/* ================= Loading ================= */
 function normalize(items){
   var seen={},out=[];
   items.forEach(function(a){var k=a.title.toLowerCase();if(seen[k])return;seen[k]=1;out.push(a);});
@@ -740,10 +1008,10 @@ function normalize(items){
 function afterData(){render();renderDigest();saveHistory();}
 function translateCards(){
   if(!SETTINGS.translate)return;
-  var en=ALL.filter(function(a){return a.lang==='en'&&!a.translated;});
-  if(!en.length)return;
-  var texts=[];en.forEach(function(a){texts.push(a.title);texts.push(a.excerpt);});
-  translateTexts(texts).then(function(tr){en.forEach(function(a,i){if(tr[i*2]!==undefined&&tr[i*2]){a.title=tr[i*2];a.excerpt=tr[i*2+1]||a.excerpt;a.translated=true;}});afterData();saveCache();});
+  var fr=ALL.filter(function(a){return a.lang!=='en'&&!a.translated;});
+  if(!fr.length)return;
+  var texts=[];fr.forEach(function(a){texts.push(a.title);texts.push(a.excerpt);});
+  translateTexts(texts).then(function(tr){fr.forEach(function(a,i){if(tr[i*2]!==undefined&&tr[i*2]){a.title=tr[i*2];a.excerpt=tr[i*2+1]||a.excerpt;a.translated=true;}});afterData();saveCache();});
 }
 function fillMissingImages(){
   var miss=ALL.filter(function(a){return !a.img;});if(!miss.length)return;
@@ -770,45 +1038,47 @@ function load(){
   });
 }
 renderTopics();
-/* ============ Fonctions bonus (menace, glossaire, TL;DR, podcast, thème, votes, historique, partage, quiz) ============ */
-var GLOSSARY={"fps":"Jeu de tir à la première personne (First-Person Shooter), où l’on voit à travers les yeux du personnage. Désigne aussi les images par seconde, qui mesurent la fluidité d’un jeu.","rpg":"Jeu de rôle : on incarne un personnage qui gagne de l’expérience, monte en niveau et s’équipe au fil d’une aventure souvent riche en histoire.","jrpg":"Jeu de rôle japonais, au style et à la narration typiques des productions nippones comme Final Fantasy ou Dragon Quest.","mmo":"Jeu massivement multijoueur en ligne, où des milliers de joueurs partagent le même monde persistant, comme World of Warcraft.","moba":"Arène de bataille en ligne où deux équipes de héros s’affrontent pour détruire la base adverse, comme League of Legends ou Dota 2.","battle royale":"Mode où des dizaines de joueurs s’affrontent sur une carte qui rétrécit, jusqu’au dernier survivant, comme Fortnite ou Warzone.","roguelike":"Jeu où l’on recommence de zéro à chaque mort, avec des niveaux générés aléatoirement : chaque partie est différente.","metroidvania":"Jeu d’exploration où de nouvelles capacités débloquent peu à peu des zones inaccessibles, dans la lignée de Metroid et Castlevania.","soulslike":"Jeu d’action exigeant inspiré de Dark Souls : combats punitifs, mort qui coûte cher, et grande satisfaction à progresser.","aaa":"Jeu à très gros budget produit par un grand studio, l’équivalent du blockbuster au cinéma.","dlc":"Contenu téléchargeable vendu après la sortie d’un jeu : nouvelles missions, personnages, cartes ou cosmétiques.","season pass":"Formule qui donne accès d’avance à plusieurs contenus futurs d’un jeu, généralement moins cher que de les acheter un par un.","battle pass":"Système de récompenses par paliers à débloquer en jouant pendant une saison, avec une piste gratuite et une piste payante.","free-to-play":"Jeu gratuit au téléchargement, qui se finance par les achats intégrés : cosmétiques, battle pass ou monnaie virtuelle.","pay-to-win":"Jeu où payer procure un avantage réel sur les autres joueurs, au-delà du simple cosmétique. Très mal vu par les joueurs.","microtransaction":"Petit achat en argent réel dans un jeu : skins, monnaie virtuelle, boosts. Le cœur du modèle économique des jeux gratuits.","lootbox":"Coffre au contenu aléatoire acheté avec de l’argent réel ou de la monnaie de jeu, critiqué pour sa proximité avec les jeux d’argent.","gacha":"Système de tirage aléatoire payant, hérité des jeux mobiles japonais, pour obtenir des personnages ou objets rares, comme dans Genshin Impact.","skin":"Objet purement cosmétique qui change l’apparence d’un personnage ou d’une arme sans modifier ses performances.","cross-play":"Possibilité de jouer ensemble en ligne depuis des machines différentes : PC, PlayStation, Xbox ou Switch.","crossplay":"Possibilité de jouer ensemble en ligne depuis des machines différentes : PC, PlayStation, Xbox ou Switch.","early access":"Jeu vendu avant d’être terminé : on y joue pendant son développement et il s’améliore au fil des mises à jour.","accès anticipé":"Jeu vendu avant d’être terminé : on y joue pendant son développement et il s’améliore au fil des mises à jour.","bêta":"Version de test d’un jeu, ouverte à tous ou sur invitation, qui sert à corriger bugs et serveurs avant la vraie sortie.","patch":"Mise à jour qui corrige des bugs, rééquilibre le jeu ou ajoute du contenu.","day one":"Se dit du jour de sortie d’un jeu. Le « patch day one » est la mise à jour à télécharger dès le lancement pour corriger les derniers problèmes.","nerf":"Affaiblissement volontaire d’une arme, d’un personnage ou d’une capacité jugés trop forts, via une mise à jour d’équilibrage.","buff":"Renforcement d’une arme, d’un personnage ou d’une capacité jugés trop faibles — l’inverse du nerf.","hitbox":"Zone invisible autour d’un personnage qui détermine ce qui compte comme une touche. Une hitbox mal réglée rend les combats injustes.","lag":"Décalage entre ton action et sa prise en compte par le jeu, causé par une connexion lente ou un serveur surchargé.","ping":"Temps en millisecondes que met un message à faire l’aller-retour vers le serveur. Plus il est bas, plus le jeu en ligne est réactif.","netcode":"Ensemble des techniques qui synchronisent une partie en ligne entre les joueurs. Un bon netcode masque le lag ; un mauvais fait rager.","matchmaking":"Système qui compose automatiquement les parties en ligne en réunissant des joueurs de niveau proche.","meta":"Ensemble des stratégies, armes ou personnages considérés comme les plus efficaces du moment dans un jeu compétitif.","farming":"Répéter une activité du jeu (tuer des monstres, refaire une mission) pour accumuler ressources, expérience ou objets.","speedrun":"Discipline qui consiste à finir un jeu le plus vite possible, en exploitant chaque raccourci et parfois des glitchs, chrono à l’appui.","glitch":"Bug du jeu détourné par les joueurs pour traverser un mur, dupliquer des objets ou sauter une partie du niveau.","rng":"Part de hasard générée par le jeu (butin, coups critiques, drops). « Bon RNG » = chanceux, « mauvais RNG » = malchanceux.","pvp":"Joueur contre joueur : les affrontements opposent de vraies personnes, en duel ou en équipes.","pve":"Joueur contre environnement : on affronte des ennemis contrôlés par le jeu, seul ou en coopération.","hud":"Interface affichée à l’écran pendant le jeu : vie, munitions, mini-carte. Un bon HUD informe sans gêner.","ray tracing":"Technique de rendu qui simule le trajet réel de la lumière pour des reflets et des ombres réalistes. Magnifique, mais gourmand en puissance.","dlss":"Technologie NVIDIA qui utilise l’IA pour afficher le jeu en haute définition à partir d’une image calculée en plus basse résolution : gros gain de performances.","cloud gaming":"Jouer en streaming à des jeux qui tournent sur des serveurs distants, sans installation, comme avec GeForce Now ou le cloud Xbox.","remaster":"Version améliorée d’un ancien jeu : textures, résolution et confort modernisés, mais le jeu reste le même.","remake":"Jeu ancien entièrement refait de zéro avec les technologies actuelles, comme Resident Evil 4 ou Final Fantasy VII Remake.","émulateur":"Logiciel qui imite une console sur un autre appareil (PC, téléphone) pour lancer ses jeux. Légal, tant qu’on possède les jeux originaux.","rom":"Copie numérique d’un jeu (cartouche ou disque) utilisée par les émulateurs. Télécharger des ROM de jeux qu’on ne possède pas est illégal.","romhack":"Version modifiée d’un jeu rétro créée par des fans : nouveaux niveaux, traductions, difficultés inédites.","homebrew":"Application ou jeu amateur non officiel qui tourne sur une console, généralement après l’avoir débridée.","custom firmware":"Système modifié installé sur une console pour la débrider : il ouvre la porte aux homebrews, mais expose au bannissement en ligne.","jailbreak":"Débridage d’une console ou d’un appareil pour contourner les restrictions du fabricant et installer des logiciels non autorisés.","rétrocompatibilité":"Capacité d’une console à faire tourner les jeux des générations précédentes.","anticheat":"Logiciel de protection qui détecte et bannit les tricheurs dans les jeux en ligne, comme Easy Anti-Cheat ou BattlEye.","aimbot":"Triche qui vise automatiquement à la place du joueur dans les jeux de tir. Sa détection entraîne un bannissement.","crunch":"Période de surtravail intense imposée aux équipes pour finir un jeu à temps, régulièrement dénoncée dans l’industrie.","portage":"Adaptation d’un jeu vers une autre machine que celle d’origine, par exemple un jeu console qui arrive sur PC.","exclusivité":"Jeu disponible sur une seule plateforme, arme commerciale majeure entre PlayStation, Xbox et Nintendo.","moteur de jeu":"Logiciel qui fait tourner le jeu : graphismes, physique, sons. Les plus connus sont l’Unreal Engine et Unity.","open world":"Jeu en monde ouvert : une grande carte explorable librement, sans couloirs imposés, comme dans GTA ou Zelda.","monde ouvert":"Grande carte explorable librement, sans couloirs imposés, comme dans GTA ou Breath of the Wild.","indé":"Jeu indépendant créé par un petit studio sans gros éditeur, souvent plus original et moins cher qu’un AAA."};
+/* ============ Extras: hype level, glossary, TL;DR, podcast, theme, votes, history, share, quiz ============ */
+var GLOSSARY={"fps":"First-person shooter, where you see through the character's eyes. Also short for frames per second, the measure of a game's smoothness.","rpg":"Role-playing game: you play a character who gains experience, levels up and equips gear through a story-rich adventure.","jrpg":"Japanese role-playing game, with the style and storytelling typical of Japanese productions like Final Fantasy or Dragon Quest.","mmo":"Massively multiplayer online game where thousands of players share the same persistent world, like World of Warcraft.","moba":"Online battle arena where two teams of heroes fight to destroy the enemy base, like League of Legends or Dota 2.","battle royale":"Mode where dozens of players fight on a shrinking map until a single one is left standing, like Fortnite or Warzone.","roguelike":"Game where every death sends you back to zero, with randomly generated levels: every run is different.","metroidvania":"Exploration game where new abilities gradually unlock previously unreachable areas, in the vein of Metroid and Castlevania.","soulslike":"Demanding action game inspired by Dark Souls: punishing fights, a costly death, and real satisfaction when you progress.","aaa":"Very big-budget game produced by a major studio — the blockbuster of video games.","dlc":"Downloadable content sold after a game's release: new quests, characters, maps or cosmetics.","season pass":"Bundle giving early access to several future contents of a game, usually cheaper than buying them one by one.","battle pass":"Tiered reward track unlocked by playing during a season, with a free path and a paid path.","free-to-play":"Game that is free to download and funded by in-game purchases: cosmetics, battle pass or virtual currency.","pay-to-win":"A game where paying gives a real advantage over other players, beyond cosmetics. Widely frowned upon by the community.","microtransaction":"Small real-money purchase inside a game: skins, virtual currency, boosts. The core business model of free games.","lootbox":"A chest with random content bought with real money or in-game currency, criticized for its similarity to gambling.","gacha":"Paid random draw system inherited from Japanese mobile games to obtain rare characters or items, as in Genshin Impact.","skin":"Purely cosmetic item that changes the look of a character or weapon without affecting its performance.","cross-play":"Playing together online from different platforms: PC, PlayStation, Xbox or Switch.","crossplay":"Playing together online from different platforms: PC, PlayStation, Xbox or Switch.","early access":"A game sold before it is finished: you play it during development and it improves with every update.","beta":"Test version of a game, open to everyone or by invitation, used to fix bugs and stress servers before the real launch.","patch":"Update that fixes bugs, rebalances the game or adds content.","day one":"The release day of a game. A 'day-one patch' is the update downloaded at launch to fix last-minute issues.","nerf":"Deliberate weakening of a weapon, character or ability deemed too strong, through a balance update.","buff":"Strengthening of a weapon, character or ability deemed too weak — the opposite of a nerf.","hitbox":"Invisible area around a character that decides what counts as a hit. A badly tuned hitbox makes fights feel unfair.","lag":"Delay between your action and the game registering it, caused by a slow connection or an overloaded server.","ping":"Time in milliseconds for a message to reach the server and come back. The lower it is, the more responsive online play feels.","netcode":"All the techniques that synchronize an online match between players. Good netcode hides lag; bad netcode is infuriating.","matchmaking":"System that automatically builds online matches by grouping players of similar skill.","meta":"The set of strategies, weapons or characters considered the strongest at the moment in a competitive game.","farming":"Repeating a game activity (killing monsters, replaying a mission) to accumulate resources, experience or items.","speedrun":"The discipline of finishing a game as fast as possible, exploiting every shortcut and sometimes glitches, against the clock.","glitch":"A game bug repurposed by players to clip through walls, duplicate items or skip part of a level.","rng":"The randomness generated by the game (loot, critical hits, drops). 'Good RNG' means lucky, 'bad RNG' means unlucky.","pvp":"Player versus player: fights opposing real people, in duels or teams.","pve":"Player versus environment: you fight game-controlled enemies, alone or in co-op.","hud":"Interface shown on screen during the game: health, ammo, minimap. A good HUD informs without getting in the way.","ray tracing":"Rendering technique that simulates the real path of light for realistic reflections and shadows. Beautiful, but hardware-hungry.","dlss":"NVIDIA technology that uses AI to upscale a lower-resolution image to high definition: a big performance gain.","cloud gaming":"Playing by streaming games that run on remote servers, no install needed, like GeForce Now or Xbox Cloud Gaming.","remaster":"Improved version of an old game: modernized textures, resolution and comfort, but the same game underneath.","remake":"An old game rebuilt from scratch with current technology, like Resident Evil 4 or Final Fantasy VII Remake.","emulator":"Software that mimics a console on another device (PC, phone) to run its games. Legal, as long as you own the games.","rom":"Digital copy of a game (cartridge or disc) used by emulators. Downloading ROMs of games you don't own is illegal.","romhack":"Fan-made modified version of a retro game: new levels, translations, new difficulty.","homebrew":"Unofficial amateur app or game that runs on a console, usually once it has been unlocked.","custom firmware":"Modified operating system installed on a console to unlock it: it opens the door to homebrews but risks an online ban.","jailbreak":"Unlocking a console or device to bypass the manufacturer's restrictions and install unauthorized software.","backward compatibility":"A console's ability to run games from previous generations.","anticheat":"Protection software that detects and bans cheaters in online games, like Easy Anti-Cheat or BattlEye.","aimbot":"Cheat that aims automatically for the player in shooters. Getting caught means a ban.","crunch":"Period of intense overtime imposed on teams to ship a game on time, regularly denounced in the industry.","port":"Adapting a game to a different machine than the original one, e.g. a console game coming to PC.","exclusive":"A game available on a single platform, a major commercial weapon between PlayStation, Xbox and Nintendo.","game engine":"The software that runs the game: graphics, physics, sound. The best known are Unreal Engine and Unity.","open world":"Open-world game: one large map to explore freely, without forced corridors, like GTA or Zelda.","indie":"Independent game made by a small studio without a big publisher, often more original and cheaper than a AAA."};
 var GLOSS_KEYS=Object.keys(GLOSSARY).sort(function(a,b){return b.length-a.length;});
-var QUIZ=[{"q":"Quelle est la console la plus vendue de l'histoire ?","options":["La PlayStation 2","La Wii","La Game Boy"],"correct":0,"explain":"La PS2 s'est écoulée à environ 160 millions d'exemplaires depuis 2000, un record que la Switch talonne aujourd'hui."},{"q":"Qui a créé Mario ?","options":["Hideo Kojima","Shigeru Miyamoto","Satoru Iwata"],"correct":1,"explain":"Shigeru Miyamoto a créé Mario, mais aussi Zelda et Donkey Kong. C'est le game designer le plus influent de l'histoire de Nintendo."},{"q":"Dans quel jeu Mario apparaît-il pour la première fois ?","options":["Super Mario Bros.","Mario Kart","Donkey Kong (1981)"],"correct":2,"explain":"Mario débute en 1981 dans Donkey Kong sous le nom de « Jumpman », avant d'avoir sa propre série en 1985 avec Super Mario Bros."},{"q":"Que signifie « RPG » ?","options":["Role-Playing Game, un jeu de rôle","Real Player Game","Rapid Pixel Graphics"],"correct":0,"explain":"Dans un RPG, on incarne un personnage qui progresse : niveaux, équipement, choix d'histoire. Exemples : Final Fantasy, Baldur's Gate."},{"q":"À qui appartient la boutique Steam ?","options":["Microsoft","Valve","Epic Games"],"correct":1,"explain":"Valve, le studio de Half-Life et Counter-Strike, a lancé Steam en 2003. C'est aujourd'hui la plus grande boutique de jeux PC."},{"q":"Qu'est-ce qu'un speedrun ?","options":["Un mode de difficulté extrême","Une course dans un jeu de voitures","Finir un jeu le plus vite possible, chrono en main"],"correct":2,"explain":"Les speedrunners optimisent chaque seconde, parfois à l'aide de glitchs. Les records sont vérifiés et classés par catégories sur speedrun.com."},{"q":"Qu'est-ce qu'un émulateur ?","options":["Un logiciel qui imite une console pour lancer ses jeux ailleurs","Un programme anti-triche","Une manette compatible toutes consoles"],"correct":0,"explain":"Un émulateur reproduit le fonctionnement d'une console sur PC ou téléphone. L'outil est légal ; télécharger des jeux qu'on ne possède pas ne l'est pas."},{"q":"Que risque une console débridée (jailbreak/CFW) utilisée en ligne ?","options":["Rien du tout","Un bannissement définitif des services en ligne","Juste un avertissement par e-mail"],"correct":1,"explain":"Nintendo, Sony et Microsoft détectent les consoles modifiées et bannissent console et compte. Les bidouilleurs gardent une machine dédiée hors ligne."},{"q":"Que signifie « free-to-play » (F2P) ?","options":["Un jeu jouable gratuitement, financé par les achats intégrés","Un jeu offert avec une console","Un week-end d'essai gratuit"],"correct":0,"explain":"Fortnite, Warzone ou League of Legends sont gratuits : skins, battle pass et monnaies virtuelles font leur chiffre d'affaires."},{"q":"Quelle est la mascotte de SEGA ?","options":["Pac-Man","Pikachu","Sonic"],"correct":2,"explain":"Sonic le hérisson est né en 1991 pour concurrencer Mario, à l'époque où SEGA fabriquait encore des consoles comme la Mega Drive."},{"q":"Dans la série Zelda, comment s'appelle le héros que l'on incarne ?","options":["Link","Zelda","Ganon"],"correct":0,"explain":"Piège classique : Zelda est la princesse, Ganon le méchant. Le héros en tunique verte s'appelle Link."},{"q":"Qu'est-ce qu'un « nerf » dans un jeu ?","options":["Un bug d'affichage","L'affaiblissement d'une arme ou d'un personnage trop forts","Un bonus d'expérience temporaire"],"correct":1,"explain":"Quand un élément domine la meta, les développeurs le « nerfent » via un patch d'équilibrage. L'inverse (renforcer) s'appelle un buff."},{"q":"Qu'est-ce que le cross-play ?","options":["Jouer à deux sur le même écran","Changer de personnage en pleine partie","Jouer ensemble depuis des plateformes différentes (PC, consoles)"],"correct":2,"explain":"Le cross-play réunit les joueurs PC, PlayStation, Xbox et Switch dans les mêmes parties, comme dans Fortnite ou Rocket League."},{"q":"Qu'est-ce qu'une ROM ?","options":["La copie numérique d'un jeu, lisible par un émulateur","Une pièce détachée de console","Un format de carte mémoire"],"correct":0,"explain":"La ROM contient les données du jeu extraites de la cartouche ou du disque. On ne peut légalement utiliser que celles de jeux qu'on possède."},{"q":"À quoi sert le DLSS de NVIDIA ?","options":["À refroidir la carte graphique","À gagner des performances grâce à l'upscaling par IA","À bloquer les logiciels de triche"],"correct":1,"explain":"Le jeu est calculé en résolution réduite puis agrandi par IA : image quasi identique, mais beaucoup plus d'images par seconde. AMD propose le FSR."},{"q":"Quelle est la différence entre un remake et un remaster ?","options":["Aucune, c'est le même mot","Le remaster est toujours gratuit","Le remake est refait de zéro, le remaster améliore l'original"],"correct":2,"explain":"Un remaster lisse l'existant (textures, résolution). Un remake reconstruit le jeu entier avec les technologies modernes, comme Resident Evil 4 (2023)."},{"q":"Qu'est-ce qu'un roguelike ?","options":["Un jeu à niveaux générés aléatoirement où la mort fait tout recommencer","Un jeu d'infiltration","Un mode photo avancé"],"correct":0,"explain":"Chaque partie est unique et la mort est permanente : Hades, Balatro ou The Binding of Isaac reposent sur ce principe."},{"q":"Le Game Pass est le service d'abonnement de...","options":["PlayStation","Xbox (Microsoft)","Nintendo"],"correct":1,"explain":"Le Game Pass donne accès à un catalogue de jeux contre un abonnement mensuel, avec les exclusivités Xbox dès leur sortie. Sony répond avec le PS Plus."},{"q":"Qu'est-ce que le RNG ?","options":["Le moteur graphique d'un jeu","Le classement mondial des joueurs","La part de hasard générée par le jeu (butin, critiques...)"],"correct":2,"explain":"RNG = Random Number Generator. C'est lui qui décide du butin qui tombe ou des coups critiques — d'où « bon » ou « mauvais » RNG."},{"q":"Qui a créé Minecraft à l'origine ?","options":["Markus « Notch » Persson","Electronic Arts","Ubisoft"],"correct":0,"explain":"Développé seul par Notch en 2009 puis par son studio Mojang, Minecraft a été racheté par Microsoft en 2014 pour 2,5 milliards de dollars."},{"q":"Qu'est-ce qu'un homebrew sur console ?","options":["Une boisson énergisante d'esport","Une application ou un jeu amateur non officiel","Un pack de textures officiel"],"correct":1,"explain":"Les homebrews sont créés par des passionnés et tournent sur des consoles débridées : émulateurs, utilitaires, jeux inédits."},{"q":"Hideo Kojima est le créateur de...","options":["Metal Gear Solid et Death Stranding","Super Mario","FIFA"],"correct":0,"explain":"Figure du jeu vidéo japonais, Kojima a inventé le genre infiltration moderne avec Metal Gear avant de fonder son propre studio, Kojima Productions."},{"q":"Qu'est-ce que le « pay-to-win » ?","options":["Gagner de l'argent en jouant","Un tournoi à inscription payante","Quand payer donne un avantage réel sur les autres joueurs"],"correct":2,"explain":"Un jeu est pay-to-win quand l'argent achète de la puissance (armes, stats) et pas seulement du cosmétique. C'est très critiqué par les joueurs."},{"q":"Une hitbox, c'est...","options":["La zone invisible qui détermine si un coup touche","Une boîte collector","Le menu des paramètres"],"correct":0,"explain":"Chaque personnage ou objet a une zone de collision. Si elle est plus grande ou plus petite que le visuel, les touches semblent injustes."},{"q":"Qu'est-ce que l'esport ?","options":["Un sport olympique officiel","La compétition de jeu vidéo, avec équipes pro et tournois","Un jeu de sport en réalité virtuelle"],"correct":1,"explain":"League of Legends, Counter-Strike ou Rocket League ont des ligues professionnelles, des salaires, des transferts et des finales dans des stades."}];
-var SEV={"critical":["nintendo direct","state of play","playstation showcase","xbox games showcase","xbox showcase","summer game fest","game awards","gamescom","rachat","rachete","acquisition","acquiert","acquires","buyout","fermeture du studio","fermeture de","ferme ses portes","licenciement","licenciements","layoffs","lays off","shuts down","shut down","faillite","bankruptcy","annule","annulation","cancelled","canceled","est reporte","reporte a","reporte en","repousse a","repousse en","delayed","fuite massive","leak massif","massive leak","gros leak","banwave","vague de ban","nouvelle console","next-gen","ps6","successeur de la switch","switch 3","hausse de prix","augmentation de prix","prix augmente","price increase","price hike","proces","lawsuit","surprise annonce","annonce surprise","officialise","record de ventes","million d'exemplaires","millions d'exemplaires","million de joueurs","millions de joueurs"],"important":["date de sortie","release date","beta ouverte","open beta","beta fermee","closed beta","early access","acces anticipe","mise a jour majeure","major update","patch notes","nouvelle extension","new expansion","dlc","season pass","crossplay","cross-play","demo disponible","demo jouable","free weekend","gratuit ce week-end","week-end gratuit","nouveau trailer","gameplay devoile","gameplay reveal","configurations requises","config requise"]};
+var QUIZ=[{"q":"What is the best-selling console of all time?","options":["The PlayStation 2","The Wii","The Game Boy"],"correct":0,"explain":"The PS2 has sold around 160 million units since 2000 — a record the Switch is now chasing."},{"q":"Who created Mario?","options":["Hideo Kojima","Shigeru Miyamoto","Satoru Iwata"],"correct":1,"explain":"Shigeru Miyamoto created Mario, but also Zelda and Donkey Kong. He is Nintendo's most influential game designer."},{"q":"In which game does Mario first appear?","options":["Super Mario Bros.","Mario Kart","Donkey Kong (1981)"],"correct":2,"explain":"Mario debuts in 1981 in Donkey Kong under the name 'Jumpman', before getting his own series in 1985 with Super Mario Bros."},{"q":"What does 'RPG' stand for?","options":["Role-Playing Game","Real Player Game","Rapid Pixel Graphics"],"correct":0,"explain":"In an RPG you play a character who progresses: levels, gear, story choices. Examples: Final Fantasy, Baldur's Gate."},{"q":"Who owns the Steam store?","options":["Microsoft","Valve","Epic Games"],"correct":1,"explain":"Valve, the studio behind Half-Life and Counter-Strike, launched Steam in 2003. It is now the biggest PC game store."},{"q":"What is a speedrun?","options":["An extreme difficulty mode","A race in a driving game","Finishing a game as fast as possible, against the clock"],"correct":2,"explain":"Speedrunners optimize every second, sometimes using glitches. Records are verified and ranked by category on speedrun.com."},{"q":"What is an emulator?","options":["Software that mimics a console to run its games elsewhere","An anti-cheat program","An all-platform controller"],"correct":0,"explain":"An emulator reproduces a console's behavior on a PC or phone. The tool is legal; downloading games you don't own is not."},{"q":"What risk does a jailbroken / CFW console face when used online?","options":["Nothing at all","A permanent ban from online services","Just an email warning"],"correct":1,"explain":"Nintendo, Sony and Microsoft detect modified consoles and ban both the console and the account. Tinkerers keep a dedicated offline machine."},{"q":"What does 'free-to-play' (F2P) mean?","options":["A game you can play for free, funded by in-game purchases","A game bundled with a console","A free trial weekend"],"correct":0,"explain":"Fortnite, Warzone or League of Legends are free: skins, battle passes and virtual currencies make their money."},{"q":"What is SEGA's mascot?","options":["Pac-Man","Pikachu","Sonic"],"correct":2,"explain":"Sonic the hedgehog was born in 1991 to rival Mario, back when SEGA still made consoles like the Mega Drive."},{"q":"In the Zelda series, what is the hero's name?","options":["Link","Zelda","Ganon"],"correct":0,"explain":"Classic trap: Zelda is the princess, Ganon the villain. The hero in the green tunic is Link."},{"q":"What is a 'nerf' in a game?","options":["A display bug","The weakening of an overpowered weapon or character","A temporary XP bonus"],"correct":1,"explain":"When something dominates the meta, developers 'nerf' it with a balance patch. The opposite (buffing) is called a buff."},{"q":"What is cross-play?","options":["Playing two players on the same screen","Switching characters mid-match","Playing together from different platforms (PC, consoles)"],"correct":2,"explain":"Cross-play brings PC, PlayStation, Xbox and Switch players into the same matches, as in Fortnite or Rocket League."},{"q":"What is a ROM?","options":["The digital copy of a game, readable by an emulator","A spare console part","A memory card format"],"correct":0,"explain":"A ROM holds the game data extracted from the cartridge or disc. You may only legally use ones for games you own."},{"q":"What is NVIDIA's DLSS for?","options":["Cooling the graphics card","Gaining performance through AI upscaling","Blocking cheat software"],"correct":1,"explain":"The game is rendered at a lower resolution then upscaled by AI: nearly identical image, but many more frames per second. AMD's equivalent is FSR."},{"q":"What is the difference between a remake and a remaster?","options":["None, it's the same word","The remaster is always free","A remake is rebuilt from scratch, a remaster improves the original"],"correct":2,"explain":"A remaster polishes what exists (textures, resolution). A remake rebuilds the whole game with modern tech, like Resident Evil 4 (2023)."},{"q":"What is a roguelike?","options":["A game with randomly generated levels where death resets everything","A stealth game","An advanced photo mode"],"correct":0,"explain":"Every run is unique and death is permanent: Hades, Balatro and The Binding of Isaac are built on this principle."},{"q":"The Game Pass is the subscription service of...","options":["PlayStation","Xbox (Microsoft)","Nintendo"],"correct":1,"explain":"The Game Pass gives access to a game catalogue for a monthly fee, including Xbox exclusives on day one. Sony answers with PS Plus."},{"q":"What is RNG?","options":["A game's graphics engine","The world player ranking","The randomness generated by the game (loot, crits...)"],"correct":2,"explain":"RNG = Random Number Generator. It decides which loot drops or whether a hit crits — hence 'good' or 'bad' RNG."},{"q":"Who originally created Minecraft?","options":["Markus 'Notch' Persson","Electronic Arts","Ubisoft"],"correct":0,"explain":"Developed solo by Notch in 2009 then by his studio Mojang, Minecraft was bought by Microsoft in 2014 for $2.5 billion."},{"q":"What is a homebrew on console?","options":["An esports energy drink","An unofficial amateur app or game","An official texture pack"],"correct":1,"explain":"Homebrews are made by enthusiasts and run on unlocked consoles: emulators, utilities, original games."},{"q":"Hideo Kojima is the creator of...","options":["Metal Gear Solid and Death Stranding","Super Mario","FIFA"],"correct":0,"explain":"A Japanese video game legend, Kojima invented the modern stealth genre with Metal Gear before founding Kojima Productions."},{"q":"What is 'pay-to-win'?","options":["Earning money by playing","A paid-entry tournament","When paying gives a real advantage over other players"],"correct":2,"explain":"A game is pay-to-win when money buys power (weapons, stats), not just cosmetics. Players criticize it heavily."},{"q":"A hitbox is...","options":["The invisible zone that decides whether a hit lands","A collector's box","The settings menu"],"correct":0,"explain":"Every character or object has a collision zone. If it is bigger or smaller than the visual, hits feel unfair."},{"q":"What is esports?","options":["An official Olympic sport","Competitive video gaming, with pro teams and tournaments","A virtual-reality sports game"],"correct":1,"explain":"League of Legends, Counter-Strike and Rocket League have pro leagues, salaries, transfers and finals in stadiums."}];
+/* Hype keywords, bilingual on purpose (FR feeds are matched pre-translation). */
+var SEV={"big":["nintendo direct","state of play","playstation showcase","xbox games showcase","xbox showcase","summer game fest","the game awards","gamescom","acquisition","acquires","acquired","buyout","studio shutdown","shuts down","layoffs","lays off","bankruptcy","cancelled","canceled","delayed","massive leak","banwave","next-gen","next gen","ps6","switch successor","price increase","price hike","lawsuit","record sales","million copies sold","millions of players","rachat","acquisition","fermeture du studio","licenciement","faillite","annule","reporte","fuite massive","hausse de prix","proces","million d'exemplaires","millions de joueurs"],"mid":["release date","open beta","closed beta","early access","major update","patch notes","new expansion","dlc","season pass","crossplay","cross-play","demo available","free weekend","new trailer","gameplay reveal","system requirements","date de sortie","beta ouverte","beta fermee","acces anticipe","mise a jour majeure","nouveau trailer","gratuit ce week-end","configurations requises"]};
 
 function bodyOf(a){return a.body||a.blocks||[];}
 function severityOf(a){
   if(a.sev!=null)return a.sev;
   var t=fold((a.title||'')+' '+(a.excerpt||''));
   var s=0,i;
-  for(i=0;i<SEV.critical.length;i++){if(t.indexOf(SEV.critical[i])>=0){s=2;break;}}
-  if(!s){for(i=0;i<SEV.important.length;i++){if(t.indexOf(SEV.important[i])>=0){s=1;break;}}}
+  for(i=0;i<SEV.big.length;i++){if(t.indexOf(SEV.big[i])>=0){s=2;break;}}
+  if(!s){for(i=0;i<SEV.mid.length;i++){if(t.indexOf(SEV.mid[i])>=0){s=1;break;}}}
   a.sev=s;return s;
 }
-function updateMenace(){
-  var el=document.getElementById('menace');if(!el)return;
+function updateHype(){
+  var el=document.getElementById('hype');if(!el)return;
   var c=0;ALL.forEach(function(a){if(severityOf(a)===2)c++;});
-  var L=c>=6?{t:'Actu en fusion',e:'',c:'#e5675b'}:c>=3?{t:'Grosse journée',e:'',c:'#d9a441'}:c>=1?{t:'Ça bouge',e:'',c:'#d9a441'}:{t:'Journée calme',e:'',c:'#4cb782'};
-  el.style.display='inline-flex';el.style.borderColor=L.c;el.innerHTML='Hype du jour : <b style="color:'+L.c+'">'+L.t+'</b>'+(c?' ('+c+' gros titre'+(c>1?'s':'')+')':'');
+  var L=c>=6?{t:'Wild',c:'#fb7185'}:c>=3?{t:'Big day',c:'#fbbf24'}:c>=1?{t:'Buzzing',c:'#fbbf24'}:{t:'Quiet',c:'#34d399'};
+  el.style.display='inline-flex';
+  el.innerHTML='<span class="pip" style="background:'+L.c+'"></span>Hype level: <b style="color:'+L.c+'">'+L.t+'</b>'+(c?' ('+c+' big stor'+(c>1?'ies':'y')+')':'');
 }
 var VOTES=lsGet('gmd_votes',{});
 function voteSource(src,dir){VOTES[src]=(VOTES[src]||0)+dir;lsSet('gmd_votes',VOTES);}
 function sourceBoost(a){var v=VOTES[a.source]||0;return v>3?3:(v<-3?-3:v);}
 
-/* TL;DR extractif */
+/* Extractive TL;DR */
 function sentencesOf(txt){var m=(txt||'').match(/[^.!?]+[.!?]+/g);return m?m:((txt&&txt.length>40)?[txt]:[]);}
 function makeTLDR(a){
   var sents=[];
   var bd=bodyOf(a);if(bd.length){bd.forEach(function(b){if(b.t==='p'){sentencesOf(b.v).forEach(function(s){s=s.trim();if(s.length>45)sents.push(s);});}});}
   if(!sents.length&&a.excerpt)sents=[a.excerpt];
   if(sents.length<=3)return sents;
-  var kw=['annonce','sortie','date','exclusi','gratuit','million','joueur','studio','console','nouveau','remake','remaster','report','rachat','mise a jour','disponible','revele','confirme'];
+  var kw=['announce','announced','reveal','new','release','trailer','delayed','leak','launch','free','update','patch','dlc','sale','deal','million','player','record','annonce','nouveau','repousse','gratuit','fuite'];
   var scored=sents.map(function(s,i){var sc=(sents.length-i)/sents.length;var f=fold(s);kw.forEach(function(w){if(f.indexOf(w)>=0)sc+=0.4;});return {s:s,sc:sc,i:i};});
   scored.sort(function(x,y){return y.sc-x.sc;});
   return scored.slice(0,3).sort(function(x,y){return x.i-y.i;}).map(function(o){return o.s;});
 }
 
-/* Glossaire : surligne les termes dans le lecteur (nœuds texte uniquement) */
+/* Glossary: highlight terms in the reader (text nodes only) */
 function glossify(){
   if(!readerEl)return;
   var used={};
@@ -821,8 +1091,8 @@ function glossify(){
       var term=GLOSS_KEYS[k];if(used[term])continue;
       var ft=fold(term),idx=low.indexOf(ft);if(idx<0)continue;
       var bfr=low.charAt(idx-1),aft=low.charAt(idx+ft.length);
-      if(bfr&&/[a-z0-9éèàâê]/.test(bfr))continue;
-      if(aft&&/[a-z0-9éèàâê]/.test(aft))continue;
+      if(bfr&&/[a-z0-9]/.test(bfr))continue;
+      if(aft&&/[a-z0-9]/.test(aft))continue;
       used[term]=1;
       var span=document.createElement('span');span.className='gl';span.setAttribute('data-t',term);span.textContent=txt.substr(idx,term.length);
       var post=document.createTextNode(txt.substr(idx+term.length));
@@ -837,19 +1107,19 @@ function showGloss(el){
   var t=el.getAttribute('data-t'),def=GLOSSARY[t];if(!def)return;
   var pop=document.getElementById('glpop');pop.innerHTML='<b>'+esc(t)+'</b><br>'+esc(def);
   var r=el.getBoundingClientRect();pop.style.display='block';
-  var top=r.bottom+8,left=Math.min(r.left,window.innerWidth-300);
-  pop.style.top=Math.min(top,window.innerHeight-120)+'px';pop.style.left=Math.max(8,left)+'px';
+  var top=r.bottom+8,left=Math.min(r.left,window.innerWidth-310);
+  pop.style.top=Math.min(top,window.innerHeight-130)+'px';pop.style.left=Math.max(8,left)+'px';
 }
 function hideGloss(){var p=document.getElementById('glpop');if(p)p.style.display='none';}
 
-/* Enrichit le lecteur après chaque rendu : TL;DR + glossaire */
+/* Enrich the reader after each render: TL;DR + glossary */
 function enhanceReader(){
   var a=readerCur;if(!a||!readerEl)return;
   if(bodyOf(a).length){
     var tl=makeTLDR(a);
     if(tl.length){
       var box=document.createElement('div');box.className='tldr';
-      box.innerHTML='<div class="tl">En bref</div><ul>'+tl.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ul>';
+      box.innerHTML='<div class="tl">In short</div><ul>'+tl.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ul>';
       var anchor=readerEl.querySelector('.rtime');
       if(anchor)anchor.parentNode.insertBefore(box,anchor.nextSibling);
     }
@@ -857,7 +1127,7 @@ function enhanceReader(){
   glossify();
 }
 
-/* Mode podcast 🎧 */
+/* Podcast mode */
 var podcast={on:false,queue:[],idx:0};
 function startPodcast(){
   var list=visibleList().slice(0,15);if(!list.length)return;
@@ -868,26 +1138,26 @@ function playPodcast(){
   var a=podcast.queue[podcast.idx];
   var tl=(bodyOf(a).length)?makeTLDR(a).join(' '):a.excerpt;
   var bar=document.getElementById('podbar');
-  if(bar){bar.style.display='flex';bar.querySelector('.pt').textContent='Podcast '+(podcast.idx+1)+'/'+podcast.queue.length+' — '+a.title;}
-  speak('Article '+(podcast.idx+1)+'. '+a.title+'. '+(tl||''));
+  if(bar){bar.style.display='flex';bar.querySelector('.pt').textContent='PODCAST '+(podcast.idx+1)+'/'+podcast.queue.length+' — '+a.title;}
+  speak('Story '+(podcast.idx+1)+'. '+a.title+'. '+(tl||''));
 }
 function stopPodcast(){podcast.on=false;stopSpeak();var bar=document.getElementById('podbar');if(bar)bar.style.display='none';}
 window.onSpeakDone=function(){if(podcast.on){podcast.idx++;playPodcast();}else{speaking=false;syncTtsBtns();}};
 
-/* Thème clair/sombre */
-function applyTheme(){document.documentElement.setAttribute('data-theme',SETTINGS.theme||'dark');var b=document.getElementById('themeBtn');if(b)b.textContent='Thème';}
+/* Light/dark theme */
+function applyTheme(){document.documentElement.setAttribute('data-theme',SETTINGS.theme||'dark');}
 function toggleTheme(){SETTINGS.theme=(SETTINGS.theme==='light')?'dark':'light';lsSet('gmd_settings',SETTINGS);applyTheme();}
 
-/* Partage */
+/* Sharing */
 function toast(msg){var t=document.getElementById('toast');if(!t)return;t.textContent=msg;t.style.display='block';clearTimeout(window.__tt);window.__tt=setTimeout(function(){t.style.display='none';},2200);}
 function shareArticle(a){
   if(!a)return;var text=a.title+' — '+a.link;
   if(window.AndroidBridge&&AndroidBridge.share){AndroidBridge.share(text);return;}
   if(navigator.share){navigator.share({title:a.title,url:a.link}).catch(function(){});return;}
-  try{navigator.clipboard.writeText(text);toast('Lien copié !');}catch(e){window.prompt('Copie ce lien :',a.link);}
+  try{navigator.clipboard.writeText(text);toast('Link copied');}catch(e){window.prompt('Copy this link:',a.link);}
 }
 
-/* Historique / archives */
+/* History / archives */
 function saveHistory(){
   if(!ALL.length)return;
   var hist=lsGet('gmd_history',{});
@@ -899,86 +1169,54 @@ function saveHistory(){
 function openArchives(){
   var hist=lsGet('gmd_history',{});var keys=Object.keys(hist).sort().reverse();
   var m=document.getElementById('archModal'),body=document.getElementById('archBody');
-  if(!keys.length){body.innerHTML='<div style="color:var(--muted)">Aucun historique pour le moment. Reviens demain !</div>';}
+  if(!keys.length){body.innerHTML='<div style="color:var(--muted);padding:8px 0 4px">No history yet — come back tomorrow.</div>';}
   else{
     body.innerHTML=keys.map(function(k){
-      var d=new Date(k+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+      var d=new Date(k+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long'});
       var arts=hist[k];
-      return '<div class="archday"><div class="archdate">'+esc(d)+' <span style="color:var(--muted);font-weight:400">('+arts.length+')</span></div>'+
+      return '<div class="archday"><div class="archdate">'+esc(d)+' · '+arts.length+' stories</div>'+
         arts.slice(0,12).map(function(a){return '<a class="archlink" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+esc(a.title)+' <span>· '+esc(a.source)+'</span></a>';}).join('')+'</div>';
     }).join('');
   }
   m.classList.add('open');
 }
 
-/* Quiz du jour 🧠 */
+/* Daily quiz */
 function renderQuiz(){
   var el=document.getElementById('quiz');if(!el||!QUIZ.length)return;
   var start=new Date(new Date().getFullYear(),0,0);var day=Math.floor((new Date()-start)/86400000);
   var qi=day%QUIZ.length,q=QUIZ[qi];
   var answered=lsGet('gmd_quiz_'+qi,null);
-  var h='<div class="lbl">Quiz du jour</div><div class="qq">'+esc(q.q)+'</div><div class="qopts">';
-  q.options.forEach(function(o,i){var cls='qopt';if(answered!=null){if(i===q.correct)cls+=' ok';else if(i===answered)cls+=' ko';}h+='<button class="'+cls+'" data-qi="'+i+'"'+(answered!=null?' disabled':'')+'>'+esc(o)+'</button>';});
+  var h='<div class="lbl">Daily gaming quiz</div><div class="qq">'+esc(q.q)+'</div><div class="qopts">';
+  var letters=['A','B','C','D'];
+  q.options.forEach(function(o,i){var cls='qopt';if(answered!=null){if(i===q.correct)cls+=' ok';else if(i===answered)cls+=' ko';}h+='<button class="'+cls+'" data-qi="'+i+'"'+(answered!=null?' disabled':'')+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';});
   h+='</div>';
-  if(answered!=null)h+='<div class="qexp">'+(answered===q.correct?'Bonne réponse. ':'Raté. ')+esc(q.explain)+'</div>';
+  if(answered!=null)h+='<div class="qexp">'+(answered===q.correct?'Correct. ':'Not quite. ')+esc(q.explain)+'</div>';
   el.innerHTML=h;el.style.display='block';el.setAttribute('data-qi',qi);el.setAttribute('data-correct',q.correct);el.setAttribute('data-exp',q.explain);
 }
 
-/* ============ Mise à jour automatique (GitHub Releases) ============ */
-function currentVersion(){
-  try{ if(window.AndroidBridge&&AndroidBridge.appVersion){ var v=AndroidBridge.appVersion(); if(v) return v; } }catch(e){}
-  return (typeof APP_VERSION!=='undefined')?APP_VERSION:'0';
-}
-function cmpVersion(a,b){
-  // on retire un éventuel préfixe "v" et tout suffixe pré-release (-beta, -rc...)
-  a=String(a).replace(/^v/i,'').split('-')[0].split('.');
-  b=String(b).replace(/^v/i,'').split('-')[0].split('.');
-  for(var i=0;i<Math.max(a.length,b.length);i++){
-    var x=parseInt(a[i]||'0',10)||0,y=parseInt(b[i]||'0',10)||0;
-    if(x>y)return 1; if(x<y)return -1;
-  }
-  return 0;
-}
-function showUpdateBanner(info){
-  if(!info||!info.available||!info.version)return;
-  if(lsGet('gmd_update_seen','')===info.version)return;   // déjà proposé puis masqué pour cette version
-  var bar=document.getElementById('updbar');if(!bar)return;
-  bar.innerHTML='<span class="ub-txt"><b>Gaming Daily '+esc(info.version)+'</b> est disponible</span>'+
-    '<span class="ub-actions"><button class="ub-go" id="ubGo">Mettre à jour</button>'+
-    '<button class="ub-x" id="ubX" title="Plus tard">✕</button></span>';
+var APP_VERSION="1.1.0";
+var UPDATE_URL="https://raw.githubusercontent.com/wk0t/GamingDaily/main/version.json";
+var PC_UPDATE=null;
+function cmpVer(a,b){a=(''+a).split('.').map(Number);b=(''+b).split('.').map(Number);for(var i=0;i<3;i++){var x=a[i]||0,y=b[i]||0;if(x>y)return 1;if(x<y)return -1;}return 0;}
+function showUpdateBar(v){
+  if(!(v&&v.version&&cmpVer(v.version,APP_VERSION)>0))return;
+  var bar=document.getElementById('updateBar');if(!bar)return;
+  bar.innerHTML='<b>Version '+esc(v.version)+' is available</b> '+(v.notes?'— '+esc(v.notes):'')+' <a href="'+esc(v.apk||v.exe||v.url||'#')+'" target="_blank" rel="noopener">Download</a><button class="uc" onclick="this.parentNode.style.display=\'none\'" aria-label="Dismiss">✕</button>';
   bar.style.display='flex';
-  document.getElementById('ubGo').onclick=function(){doUpdate(info);};
-  document.getElementById('ubX').onclick=function(){lsSet('gmd_update_seen',info.version);bar.style.display='none';};
 }
-function doUpdate(info){
-  var url=info.apk||info.url;
-  if(window.AndroidBridge&&AndroidBridge.installUpdate&&info.apk){AndroidBridge.installUpdate(info.apk);toast('Téléchargement de la mise à jour…');return;}
-  if(window.AndroidBridge&&AndroidBridge.openUrl){AndroidBridge.openUrl(url);return;}
-  try{window.open(url,'_blank');}catch(e){location.href=url;}
+function checkUpdate(){
+  if(window.PC_UPDATE){try{showUpdateBar(typeof PC_UPDATE==='string'?JSON.parse(PC_UPDATE):PC_UPDATE);}catch(e){}return;}
+  if(!window.bridgeFetch)return;
+  bridgeFetch(UPDATE_URL).then(function(raw){
+    if(!raw)return;var v;try{v=JSON.parse(raw);}catch(e){return;}
+    showUpdateBar(v);
+  });
 }
-function handleReleaseJson(raw){
-  if(!raw)return;var j;try{j=JSON.parse(raw);}catch(e){return;}
-  var tag=(j.tag_name||'').replace(/^v/i,'');if(!tag)return;
-  if(cmpVersion(tag,currentVersion())>0){
-    var apk=null;
-    if(j.assets)for(var i=0;i<j.assets.length;i++){if(/\.apk$/i.test(j.assets[i].name||'')){apk=j.assets[i].browser_download_url;break;}}
-    showUpdateBanner({available:true,version:tag,url:j.html_url,apk:apk});
-  }
-}
-function checkForUpdate(){
-  if(window.AndroidBridge&&AndroidBridge.fetchUrl){
-    // Android : on interroge l'API GitHub via le pont natif (contourne CORS)
-    bridgeFetch('https://api.github.com/repos/'+GITHUB_REPO+'/releases/latest').then(handleReleaseJson).catch(function(){});
-  }else if(typeof PC_UPDATE!=='undefined'&&PC_UPDATE){
-    // PC : l'info a déjà été calculée par le script PowerShell au démarrage
-    showUpdateBanner(PC_UPDATE);
-  }
-}
-
 function initFeatures(){
   applyTheme();
+  checkUpdate();
   renderQuiz();
-  checkForUpdate();
   var tb=document.getElementById('themeBtn');if(tb)tb.addEventListener('click',toggleTheme);
   var pb=document.getElementById('podBtn');if(pb)pb.addEventListener('click',function(){if(podcast.on)stopPodcast();else startPodcast();});
   var ab=document.getElementById('archBtn');if(ab)ab.addEventListener('click',openArchives);
@@ -992,8 +1230,16 @@ function initFeatures(){
 
 initFeatures();
 (function init(){
+  // Android: restore the offline cache, then fetch. PC host: PC_DATA was injected, skip fetching.
   try{if(window.AndroidBridge&&AndroidBridge.loadCache){var c=AndroidBridge.loadCache();if(c){var data=JSON.parse(c);if(data&&data.length){ALL=data;afterData();}}}}catch(e){}
-  load();
+  if(window.PC_DATA){
+    try{
+      ALL=window.PC_DATA.map(function(a){ if(a.body&&!a.blocks) a.blocks=a.body; return a; });
+      afterData();renderTopics();
+    }catch(e){}
+  } else {
+    load();
+  }
 })();
 </script>
 </body>

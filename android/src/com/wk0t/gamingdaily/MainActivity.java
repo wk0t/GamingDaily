@@ -59,13 +59,13 @@ public class MainActivity extends Activity {
         setContentView(web);
         web.loadUrl("file:///android_asset/index.html");
 
-        // Synthèse vocale (français)
+        // Text-to-speech (English)
         try {
             tts = new TextToSpeech(this, new TextToSpeech.OnInitListener() {
                 @Override
                 public void onInit(int status) {
                     if (status == TextToSpeech.SUCCESS) {
-                        try { tts.setLanguage(Locale.FRENCH); } catch (Exception e) {}
+                        try { tts.setLanguage(Locale.ENGLISH); } catch (Exception e) {}
                         try {
                             tts.setOnUtteranceProgressListener(new UtteranceProgressListener() {
                                 @Override public void onStart(String id) {}
@@ -86,7 +86,7 @@ public class MainActivity extends Activity {
             });
         } catch (Exception e) {}
 
-        // Permission notifications (Android 13+) + programmation du rappel quotidien
+        // Notification permission (Android 13+) + daily reminder scheduling
         try {
             if (Build.VERSION.SDK_INT >= 33) {
                 requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 1);
@@ -201,7 +201,7 @@ public class MainActivity extends Activity {
                         Intent i = new Intent(Intent.ACTION_SEND);
                         i.setType("text/plain");
                         i.putExtra(Intent.EXTRA_TEXT, text);
-                        Intent chooser = Intent.createChooser(i, "Partager l'article");
+                        Intent chooser = Intent.createChooser(i, "Share article");
                         chooser.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                         startActivity(chooser);
                     } catch (Exception e) {}
@@ -233,7 +233,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        // Version installée (versionName du manifeste) : sert à comparer avec le dernier tag publié.
+        // Installed version (versionName from the manifest): compared against the latest published tag.
         @JavascriptInterface
         public String appVersion() {
             try {
@@ -243,7 +243,7 @@ public class MainActivity extends Activity {
             }
         }
 
-        // Ouvre une URL dans le navigateur (repli pour la mise à jour ou la page de release).
+        // Opens a URL in the browser (fallback for the update or the release page).
         @JavascriptInterface
         public void openUrl(final String url) {
             runOnUiThread(new Runnable() {
@@ -258,16 +258,16 @@ public class MainActivity extends Activity {
             });
         }
 
-        // Télécharge la nouvelle version (APK) depuis GitHub via le gestionnaire de
-        // téléchargements du système, puis lance l'installeur DÈS LA FIN du téléchargement —
-        // sans dépendre d'un appui sur la notification (qui peut être masquée). En cas
-        // d'échec, on ouvre simplement l'URL dans le navigateur.
+        // Downloads the new version (APK) from GitHub through the system download
+        // manager, then launches the installer AS SOON AS the download completes —
+        // without relying on a notification tap (which can be hidden). On failure,
+        // the URL is simply opened in the browser.
         @JavascriptInterface
         public void installUpdate(final String url) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    // Défense en profondeur : on n'installe que des APK servis en HTTPS par GitHub.
+                    // Defense in depth: only install APKs served over HTTPS by GitHub.
                     if (url == null || !url.startsWith("https://")) return;
                     Uri src = Uri.parse(url);
                     String host = src.getHost();
@@ -277,18 +277,18 @@ public class MainActivity extends Activity {
                     try {
                         final DownloadManager dm = (DownloadManager) getSystemService(DOWNLOAD_SERVICE);
                         DownloadManager.Request req = new DownloadManager.Request(src);
-                        req.setTitle("Gaming Daily — mise à jour");
-                        req.setDescription("Téléchargement de la nouvelle version…");
+                        req.setTitle("Gaming Daily — update");
+                        req.setDescription("Downloading the new version...");
                         req.setMimeType("application/vnd.android.package-archive");
                         req.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
-                        // Dossier privé de l'appli : aucune permission de stockage requise, quelle que soit la version d'Android.
+                        // App-private folder: no storage permission needed on any Android version.
                         req.setDestinationInExternalFilesDir(MainActivity.this, Environment.DIRECTORY_DOWNLOADS,
                                 "GamingDaily-update-" + System.currentTimeMillis() + ".apk");
                         final long id = dm.enqueue(req);
 
-                        // À la fin du téléchargement, on lance nous-mêmes l'installeur : ainsi la
-                        // demande « autoriser cette source » cible bien Gaming Daily, et l'installation
-                        // fonctionne même si les notifications sont désactivées.
+                        // When the download finishes we launch the installer ourselves: the
+                        // "allow this source" prompt then targets Gaming Daily, and installing
+                        // works even when notifications are disabled.
                         final BroadcastReceiver[] holder = new BroadcastReceiver[1];
                         holder[0] = new BroadcastReceiver() {
                             @Override

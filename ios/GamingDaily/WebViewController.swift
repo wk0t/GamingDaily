@@ -1,9 +1,9 @@
 import UIKit
 import WebKit
 
-// Affiche l'interface web (la même que l'app Android) dans une WKWebView et fournit
-// le pont « AndroidBridge » que la page attend : requêtes réseau sans CORS, version,
-// ouverture de liens et partage. La synthèse vocale retombe sur l'API web (Web Speech).
+// Displays the web UI (the same as the Android app) in a WKWebView and provides
+// the "AndroidBridge" the page expects: CORS-free network requests, version,
+// opening links and sharing. Text-to-speech falls back to the web API (Web Speech).
 class WebViewController: UIViewController, WKScriptMessageHandler, WKNavigationDelegate, WKUIDelegate {
 
     private var webView: WKWebView!
@@ -15,10 +15,10 @@ class WebViewController: UIViewController, WKScriptMessageHandler, WKNavigationD
         let controller = WKUserContentController()
         controller.add(self, name: "bridge")
 
-        let version = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.0.0"
-        // Le shim est injecté AVANT le chargement du document : la page voit un
-        // AndroidBridge comme sur Android. fetchUrl/openUrl/share passent par le
-        // gestionnaire de messages natif ; appVersion est synchrone (valeur injectée).
+        let version = (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String) ?? "1.1.0"
+        // The shim is injected BEFORE the document loads: the page sees an
+        // AndroidBridge just like on Android. fetchUrl/openUrl/share go through the
+        // native message handler; appVersion is synchronous (injected value).
         let shim = """
         window.AndroidBridge = {
           fetchUrl: function(u, id){ window.webkit.messageHandlers.bridge.postMessage({fn:'fetchUrl', url:u, id:String(id)}); },
@@ -47,7 +47,7 @@ class WebViewController: UIViewController, WKScriptMessageHandler, WKNavigationD
         }
     }
 
-    // MARK: - Pont JS -> natif
+    // MARK: - JS -> native bridge
     func userContentController(_ userContentController: WKUserContentController, didReceive message: WKScriptMessage) {
         guard let body = message.body as? [String: Any], let fn = body["fn"] as? String else { return }
         switch fn {
@@ -98,7 +98,7 @@ class WebViewController: UIViewController, WKScriptMessageHandler, WKNavigationD
         }.resume()
     }
 
-    // MARK: - Liens externes (target=_blank / clics vers un site) -> Safari
+    // MARK: - External links (target=_blank / taps to a site) -> Safari
     func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction,
                  decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
         if navigationAction.navigationType == .linkActivated,
