@@ -1,5 +1,5 @@
-// Processus principal Electron : fenêtre + services natifs (version, cache disque).
-// La fenêtre charge renderer/index.html (la même interface que l'app Android).
+// Main Electron process: window + native services (version, disk cache).
+// The window loads renderer/index.html (the same UI as the Android app).
 const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -18,8 +18,8 @@ function createWindow() {
       contextIsolation: false,
       nodeIntegration: false,
       sandbox: false,
-      // Les flux RSS et le service de traduction n'envoient pas d'en-têtes CORS ;
-      // comme sur Android (pont natif), on autorise ces requêtes cross-origin.
+      // RSS feeds and the translation service send no CORS headers;
+      // as on Android (native bridge), allow these cross-origin requests.
       webSecurity: false
     }
   });
@@ -37,10 +37,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') app.quit();
 });
 
-// Version de l'appli (pour la vérification des mises à jour)
+// App version (for the update check)
 ipcMain.on('gmd-version', (e) => { e.returnValue = app.getVersion(); });
 
-// Cache hors-ligne des articles (comme AndroidBridge.saveCache/loadCache)
+// Offline article cache (same as AndroidBridge.saveCache/loadCache)
 const cacheFile = () => path.join(app.getPath('userData'), 'cache.json');
 ipcMain.on('gmd-save-cache', (e, data) => {
   try { fs.writeFileSync(cacheFile(), data, 'utf8'); } catch (err) {}

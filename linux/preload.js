@@ -1,7 +1,7 @@
-// Pont exposé à la page, équivalent Electron de AndroidBridge.
-// On ne fournit QUE ce que le navigateur ne sait pas faire seul : les requêtes
-// réseau sans CORS, la version, l'ouverture de liens et le cache disque.
-// (La synthèse vocale et le partage retombent sur les API web du renderer.)
+// Bridge exposed to the page, the Electron equivalent of AndroidBridge.
+// It only provides what the browser cannot do alone: CORS-free network requests,
+// the version, opening links and the disk cache.
+// (Text-to-speech and sharing fall back to the renderer's web APIs.)
 const { ipcRenderer, shell } = require('electron');
 
 function toBase64Utf8(str) {
@@ -9,12 +9,12 @@ function toBase64Utf8(str) {
 }
 
 window.AndroidBridge = {
-  // Récupère une URL sans restriction CORS puis rappelle onFetchDone(id, base64)
+  // Fetches a URL without CORS restrictions, then calls onFetchDone(id, base64)
   fetchUrl: function (url, id) {
     fetch(url).then(function (r) {
       return r.arrayBuffer().then(function (buf) {
         const bytes = Buffer.from(buf);
-        // Détection simple du charset : en-tête HTTP, sinon prologue du contenu, sinon UTF-8
+        // Simple charset detection: HTTP header, else content prologue, else UTF-8
         let charset = '';
         const ct = (r.headers.get('content-type') || '');
         let m = /charset=([\w-]+)/i.exec(ct);
@@ -37,9 +37,9 @@ window.AndroidBridge = {
     });
   },
   appVersion: function () {
-    try { return ipcRenderer.sendSync('gmd-version'); } catch (e) { return '1.0.0'; }
+    try { return ipcRenderer.sendSync('gmd-version'); } catch (e) { return '1.1.0'; }
   },
-  // Sur Linux, « mettre à jour » ouvre la page de release pour télécharger la nouvelle AppImage
+  // On Linux, "update" opens the release page to download the new AppImage
   openUrl: function (url) { shell.openExternal(url); },
   saveCache: function (data) {
     try { ipcRenderer.send('gmd-save-cache', data); } catch (e) {}

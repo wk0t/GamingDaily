@@ -6,19 +6,19 @@
     android:orientation="vertical"
     android:gravity="center"
     android:padding="12dp"
-    android:background="#1a1428">
+    android:background="#16171e">
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="🎮 Gaming Daily"
-        android:textColor="#ece7f5"
+        android:text="Gaming Daily"
+        android:textColor="#eceaf2"
         android:textStyle="bold"
         android:textSize="15sp"/>
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Ton actu jeu vidéo — touche pour ouvrir"
-        android:textColor="#9b8fb5"
+        android:text="Your daily gaming news — tap to open"
+        android:textColor="#9a9cb0"
         android:textSize="11sp"
         android:layout_marginTop="4dp"/>
 </LinearLayout>

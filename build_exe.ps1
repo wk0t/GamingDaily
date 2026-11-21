@@ -1,6 +1,6 @@
-﻿# Recompile GamingDaily.exe avec le script embarque (base64).
-# Le .exe n'est qu'un lanceur : il extrait le script PowerShell (encode en base64)
-# vers le dossier temporaire, puis l'execute sans fenetre.
+﻿# Rebuilds GamingDaily.exe with the embedded script (base64).
+# The .exe is only a launcher: it extracts the PowerShell script (base64-encoded)
+# to the temp folder, then runs it without a window.
 $root = $PSScriptRoot
 $p    = Join-Path $root "GamingDaily.ps1"
 $exe  = Join-Path $root "GamingDaily.exe"
@@ -24,7 +24,7 @@ class Program {
     psi.UseShellExecute = false;
     psi.CreateNoWindow = true;
     try { Process.Start(psi); } catch (Exception e) {
-      System.Windows.Forms.MessageBox.Show("Erreur: " + e.Message);
+      System.Windows.Forms.MessageBox.Show("Error: " + e.Message);
     }
   }
 }
@@ -33,4 +33,4 @@ $csPath = Join-Path $env:TEMP "gmd_build.cs"
 [IO.File]::WriteAllText($csPath, $cs, [Text.UTF8Encoding]::new($true))
 $csc = "$env:WINDIR\Microsoft.NET\Framework64\v4.0.30319\csc.exe"
 & $csc /nologo /target:winexe /reference:System.Windows.Forms.dll /out:"$exe" $csPath 2>&1
-Write-Output ("Exe recompile : {0} / {1} Ko" -f (Test-Path $exe), [math]::Round((Get-Item $exe).Length/1KB))
+Write-Output ("Exe rebuilt: {0} / {1} KB" -f (Test-Path $exe), [math]::Round((Get-Item $exe).Length/1KB))

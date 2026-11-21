@@ -1,8 +1,8 @@
 {
   "name": "gaming-daily",
   "productName": "Gaming Daily",
-  "version": "1.0.0",
-  "description": "Magazine quotidien 100 % jeu vidéo — actu, consoles, PC, modding & rétro, esport.",
+  "version": "1.1.0",
+  "description": "Daily 100% video-game magazine — news, consoles, PC, modding & retro, esports.",
   "author": "wk0t",
   "license": "MIT",
   "main": "main.js",
@@ -26,10 +26,10 @@
       ],
       "category": "News",
       "icon": "build/icon.png",
-      "synopsis": "Ton actu jeu vidéo quotidienne",
+      "synopsis": "Your daily gaming news",
       "desktop": {
         "Name": "Gaming Daily",
-        "Comment": "Magazine quotidien jeu vidéo"
+        "Comment": "Daily video-game magazine"
       }
     }
   },
