@@ -11,7 +11,8 @@ Light theme: [docs/screenshot-light.png](docs/screenshot-light.png). The screens
 ## Features
 
 - Built-in reader: the full article is extracted from its original page and reformatted, with a link back to the source.
-- Automatic translation of non-English sources to English.
+- Bilingual UI (English / French) with a language picker in Settings; notifications and text-to-speech follow it.
+- Automatic translation of non-English sources into the selected language.
 - Five categories: News, Consoles, PC, Modding & retro, Esports.
 - Search, offline favorites, read stories greyed out, estimated reading time.
 - Tracked topics: related stories float to the top and are highlighted.
@@ -26,7 +27,7 @@ Light theme: [docs/screenshot-light.png](docs/screenshot-light.png). The screens
 
 All files are in the [latest release](https://github.com/wk0t/GamingDaily/releases/latest).
 
-**Windows.** Run `GamingDaily.exe`: today's magazine opens in the browser. SmartScreen may warn because the executable is unsigned (More info, then Run anyway). To open it every morning at 8 AM, run `enable-autostart.ps1`.
+**Windows.** Run `GamingDaily.exe`: today's magazine opens in the browser. Optional: `powershell -File GamingDaily.ps1 -Lang fr` to generate the French edition directly. SmartScreen may warn because the executable is unsigned (More info, then Run anyway). To open it every morning at 8 AM, run `enable-autostart.ps1`.
 
 **Android.** Download `GamingDaily.apk`, open it and allow installation from this source. Android 7.0 or newer.
 

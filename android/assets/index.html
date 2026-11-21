@@ -16,7 +16,7 @@
     3. Native bridge + translation
     4. Fetching, extraction and clustering of stories
     5. Rendering (cards, built-in reader, brief, quiz, ...)
-    6. Extras (hype level, glossary, podcast, theme, votes...)
+    6. Extras (threat level, glossary, podcast, theme, votes...)
     7. Auto-update from GitHub
 -->
 <html lang="en">
@@ -337,7 +337,9 @@ footer{
 }
 .srctag.on{border-color:var(--accent); color:var(--accent)}
 .fsbtns{display:flex; gap:7px}
-.fsbtns button{
+.langbtns{display:flex; gap:7px}
+.langbtns button.on{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
+.fsbtns button,.langbtns button{
   width:40px; height:34px; border-radius:8px; border:1px solid var(--line);
   background:var(--surface2); color:var(--txt); cursor:pointer; font-size:14px; font-family:var(--font-mono);
 }
@@ -433,32 +435,32 @@ footer{
   <div class="updatebar" id="updateBar"></div>
   <header class="top">
     <div class="brand">
-      <span class="kick"><span class="dot"></span>Today's edition</span>
+      <span class="kick"><span class="dot"></span><span data-i18n="kick">Today's edition</span></span>
       <h1>Gaming Daily</h1>
       <div class="sub" id="todaySub">—</div>
     </div>
     <div class="hbtns">
-      <button class="iconbtn" id="podBtn" title="Podcast mode" aria-label="Podcast mode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/></svg></button>
-      <button class="iconbtn" id="ttsAllBtn" title="Read the brief aloud" aria-label="Read the brief aloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
-      <button class="iconbtn" id="themeBtn" title="Toggle light/dark theme" aria-label="Toggle light/dark theme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18V3z" fill="currentColor" stroke="none"/></svg></button>
-      <button class="iconbtn" id="archBtn" title="Archives" aria-label="Archives"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></button>
-      <button class="iconbtn" id="setBtn" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="14" y2="6"/><line x1="10" y1="6" x2="3" y2="6"/><circle cx="12" cy="6" r="2"/><line x1="21" y1="12" x2="16" y2="12"/><line x1="12" y1="12" x2="3" y2="12"/><circle cx="14" cy="12" r="2"/><line x1="21" y1="18" x2="12" y2="18"/><line x1="8" y1="18" x2="3" y2="18"/><circle cx="10" cy="18" r="2"/></svg></button>
+      <button class="iconbtn" id="podBtn" data-i18n-title="podcastMode"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 18v-6a9 9 0 0 1 18 0v6"/><path d="M21 19a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3v5zM3 19a2 2 0 0 0 2 2h1a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2H3v5z"/></svg></button>
+      <button class="iconbtn" id="ttsAllBtn" data-i18n-title="readBrief"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg></button>
+      <button class="iconbtn" id="themeBtn" data-i18n-title="toggleTheme"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18V3z" fill="currentColor" stroke="none"/></svg></button>
+      <button class="iconbtn" id="archBtn" data-i18n-title="archives"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></svg></button>
+      <button class="iconbtn" id="setBtn" data-i18n-title="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="21" y1="6" x2="14" y2="6"/><line x1="10" y1="6" x2="3" y2="6"/><circle cx="12" cy="6" r="2"/><line x1="21" y1="12" x2="16" y2="12"/><line x1="12" y1="12" x2="3" y2="12"/><circle cx="14" cy="12" r="2"/><line x1="21" y1="18" x2="12" y2="18"/><line x1="8" y1="18" x2="3" y2="18"/><circle cx="10" cy="18" r="2"/></svg></button>
     </div>
   </header>
 
   <div class="searchbar">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
-    <input id="search" type="search" placeholder="Search stories, topics, sources…" autocomplete="off">
+    <input id="search" type="search" data-i18n-ph="searchPh" placeholder="Search stories, topics, sources…" autocomplete="off">
   </div>
 
   <section class="notice tip">
-    <div class="lbl">Tip of the day</div>
+    <div class="lbl" data-i18n="tipLbl">Tip of the day</div>
     <h2 id="tipTitle">—</h2>
     <p id="tipText">—</p>
   </section>
 
   <section class="notice digest" id="digest" style="display:none">
-    <div class="lbl">The brief — top 3</div>
+    <div class="lbl" data-i18n="briefLbl">The brief — top 3</div>
     <ol id="digestList"></ol>
   </section>
 
@@ -479,32 +481,33 @@ footer{
   <div class="status" id="status" style="display:none"></div>
 
   <footer>
-    Stories pulled from the public RSS feeds of the listed outlets — ad-free reading, non-English items translated on the fly.<br>
-    Every story links back to its original source.<br>
-    <span style="opacity:.6">Gaming Daily v1.1.0 · auto-updates from GitHub</span>
+    <span data-i18n="foot1">Stories pulled from the public RSS feeds of the listed outlets — ad-free reading, non-English items translated on the fly.</span><br>
+    <span data-i18n="foot2">Every story links back to its original source.</span><br>
+    <span style="opacity:.6"><span data-i18n="footBrand">Gaming Daily</span> v1.1.0 · <span data-i18n="foot3">auto-updates from GitHub</span></span>
   </footer>
 </div>
 
-<div class="refreshbar"><button id="refreshBtn" title="Refresh" aria-label="Refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button></div>
+<div class="refreshbar"><button id="refreshBtn" data-i18n-title="refresh"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36L21 8"/><path d="M21 3v5h-5"/></svg></button></div>
 
 <!-- Settings -->
 <div class="modal" id="setModal">
   <div class="sheet">
-    <h3>Settings</h3>
-    <div class="setrow"><span>Translate non-English stories</span><div class="toggle" id="tgTranslate"><div class="knob"></div></div></div>
-    <div class="setrow"><span>Cluster duplicate stories</span><div class="toggle" id="tgCluster"><div class="knob"></div></div></div>
-    <div class="setrow"><span>Text size</span><div class="fsbtns"><button id="fsMinus" aria-label="Smaller text">A−</button><button id="fsPlus" aria-label="Larger text">A+</button></div></div>
-    <div class="srchead">Active sources <span>(tap to enable/disable)</span></div>
+    <h3 data-i18n="settings">Settings</h3>
+    <div class="setrow"><span data-i18n="setTranslate">Translate non-English stories</span><div class="toggle" id="tgTranslate"><div class="knob"></div></div></div>
+    <div class="setrow"><span data-i18n="setCluster">Cluster duplicate stories</span><div class="toggle" id="tgCluster"><div class="knob"></div></div></div>
+    <div class="setrow"><span data-i18n="setFont">Text size</span><div class="fsbtns"><button id="fsMinus" data-i18n-title="fontSmaller" aria-label="Smaller text">A−</button><button id="fsPlus" data-i18n-title="fontLarger" aria-label="Larger text">A+</button></div></div>
+    <div class="setrow"><span data-i18n="language">Language</span><div class="langbtns"><button id="langEn">EN</button><button id="langFr">FR</button></div></div>
+    <div class="srchead"><span data-i18n="srcHead">Active sources</span> <span data-i18n="srcHint">(tap to enable/disable)</span></div>
     <div class="srcgrid" id="srcGrid"></div>
-    <button class="closebtn" id="setClose">Done</button>
+    <button class="closebtn" id="setClose" data-i18n="done">Done</button>
   </div>
 </div>
 
 <div class="reader-backdrop" id="readerBackdrop"><div class="reader" id="reader"></div></div>
 <div id="glpop" class="glpop"></div>
 <div id="toast" class="toast"></div>
-<div class="podbar" id="podbar"><div class="pt"></div><button id="podStop">Stop</button></div>
-<div class="modal" id="archModal"><div class="sheet"><h3>Archives</h3><div id="archBody"></div><button class="closebtn" id="archClose">Close</button></div></div>
+<div class="podbar" id="podbar"><div class="pt"></div><button id="podStop" data-i18n="stop">Stop</button></div>
+<div class="modal" id="archModal"><div class="sheet"><h3 data-i18n="archives">Archives</h3><div id="archBody"></div><button class="closebtn" id="archClose" data-i18n="close">Close</button></div></div>
 
 <script>
 /* ================= Feeds ================= */
@@ -555,7 +558,97 @@ function lsSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
 var SETTINGS=lsGet('gmd_settings',{translate:true,cluster:true,fontScale:1,disabled:[]});
 var READ=lsGet('gmd_read',{});          // link -> 1
 var FAV=lsGet('gmd_fav',{});            // link -> snapshot
-var TOPICS=lsGet('gmd_topics',[]);      // ['ransomware', ...]
+var TOPICS=lsGet('gmd_topics',[]);      // tracked topic keywords
+/* ================= i18n — UI language, switchable in Settings (EN / FR) ================= */
+var I18N={
+en:{
+  kick:"Today's edition", searchPh:"Search stories, topics, sources…",
+  tipLbl:"Tip of the day", briefLbl:"The brief — top 3",
+  hypeLbl:"Hype level:", levels:{0:"Quiet",1:"Buzzing",3:"Big day",6:"Wild"},
+  hype1:"{n} big story", hypeN:"{n} big stories",
+  quizLbl:"Daily gaming quiz", qOk:"Correct. ", qKo:"Not quite. ",
+  chipAll:"All", chipFav:"Saved",
+  count1:"{n} story", countN:"{n} stories", savedSuffix:"saved",
+  noFav1:"No saved stories", noFav2:"Tap the heart on a story to keep it here.",
+  noCat1:"Nothing in this section", noCat2:"Try another filter or search.",
+  noLoad1:"No stories loaded", noLoad2:"Check your connection, then tap the refresh button.",
+  tracked:"Tracked:", addTopic:"+ track a topic", trackedTopic:"Tracked topic", saveStory:"Save story",
+  translated:"· translated", alertPill:"HOT", minRead:"{n} min read",
+  rel1:"+{n} source", relN:"+{n} sources",
+  taMin:"{n} min ago", taHour:"{n} h ago", taYesterday:"yesterday", taDay:"{n} d ago",
+  close:"Close", readAloud:"Read aloud", share:"Share", moreSrc:"More from this source", lessSrc:"Less from this source",
+  moreFrom:"More from {s}", lessFrom:"Less from {s}",
+  inShort:"In short", translating:"Translating…", loading:"Loading story…",
+  noFull:"The full text could not be extracted — open the original story below.",
+  alsoBy:"Also covered by", openSrc:"Open source: {s}",
+  linkCopied:"Link copied", copyLink:"Copy this link:",
+  noHist:"No history yet — come back tomorrow.",
+  podcastIntro:"Here are today's top stories. ",
+  updAvail:"Version {v} is available", download:"Download", dismiss:"Dismiss",
+  podcastMode:"Podcast mode", readBrief:"Read the brief aloud", toggleTheme:"Toggle light/dark theme",
+  archives:"Archives", settings:"Settings", refresh:"Refresh",
+  setTranslate:"Translate non-English stories", setCluster:"Cluster duplicate stories", setFont:"Text size",
+  language:"Language", srcHead:"Active sources", srcHint:"(tap to enable/disable)", done:"Done", stop:"Stop",
+  fontSmaller:"Smaller text", fontLarger:"Larger text",
+  foot1:"Stories pulled from the public RSS feeds of the listed outlets — ad-free reading, non-English items translated on the fly.",
+  foot2:"Every story links back to its original source.",
+  footBrand:"Gaming Daily", foot3:"auto-updates from GitHub"
+},
+fr:{
+  kick:"Édition du jour", searchPh:"Rechercher un article, un sujet, une source…",
+  tipLbl:"Astuce du jour", briefLbl:"À retenir — top 3",
+  hypeLbl:"Niveau de hype :", levels:{0:"Journée calme",1:"Ça bouge",3:"Grosse journée",6:"Jour de folie"},
+  hype1:"{n} gros titre", hypeN:"{n} gros titres",
+  quizLbl:"Quiz gaming du jour", qOk:"Correct. ", qKo:"Pas tout à fait. ",
+  chipAll:"Tout", chipFav:"Favoris",
+  count1:"{n} article", countN:"{n} articles", savedSuffix:"enregistrés",
+  noFav1:"Aucun favori", noFav2:"Touche le cœur d'un article pour le garder ici.",
+  noCat1:"Rien dans cette rubrique", noCat2:"Essaie un autre filtre ou une recherche.",
+  noLoad1:"Aucun article chargé", noLoad2:"Vérifie ta connexion, puis touche le bouton d'actualisation.",
+  tracked:"Suivi :", addTopic:"+ suivre un sujet", trackedTopic:"Sujet suivi", saveStory:"Enregistrer l'article",
+  translated:"· traduit", alertPill:"HOT", minRead:"{n} min de lecture",
+  rel1:"+{n} source", relN:"+{n} sources",
+  taMin:"il y a {n} min", taHour:"il y a {n} h", taYesterday:"hier", taDay:"il y a {n} j",
+  close:"Fermer", readAloud:"Lire à voix haute", share:"Partager", moreSrc:"Plus de cette source", lessSrc:"Moins de cette source",
+  moreFrom:"Plus de {s}", lessFrom:"Moins de {s}",
+  inShort:"En bref", translating:"Traduction…", loading:"Chargement de l'article…",
+  noFull:"Le texte complet n'a pas pu être extrait — ouvre l'article original ci-dessous.",
+  alsoBy:"Aussi traité par", openSrc:"Source : {s}",
+  linkCopied:"Lien copié", copyLink:"Copie ce lien :",
+  noHist:"Pas encore d'historique — à demain.",
+  podcastIntro:"Voici les sujets du jour. ",
+  updAvail:"La version {v} est disponible", download:"Télécharger", dismiss:"Fermer",
+  podcastMode:"Mode podcast", readBrief:"Lire le résumé à voix haute", toggleTheme:"Changer de thème clair/sombre",
+  archives:"Archives", settings:"Réglages", refresh:"Actualiser",
+  setTranslate:"Traduire les articles non anglais", setCluster:"Regrouper les doublons", setFont:"Taille du texte",
+  language:"Langue", srcHead:"Sources actives", srcHint:"(touche pour activer/désactiver)", done:"Fermer", stop:"Stop",
+  fontSmaller:"Texte plus petit", fontLarger:"Texte plus grand",
+  foot1:"Articles tirés des flux RSS publics des médias listés — lecture sans pub, articles non anglais traduits à la volée.",
+  foot2:"Chaque article renvoie vers sa source d'origine.",
+  footBrand:"Gaming Daily", foot3:"mise à jour auto depuis GitHub"
+}
+};
+
+var LANG=(window.PC_LANG&&I18N[window.PC_LANG])?window.PC_LANG:lsGet('gmd_lang','en');
+if(!I18N[LANG])LANG='en';
+function t(k){var o=I18N[LANG]||I18N.en,v=(k in o)?o[k]:I18N.en[k];return (v===undefined)?k:v;}
+function tp(k,n){return t(k).replace('{n}',n);}
+function loc(){return LANG==='fr'?'fr-FR':'en-US';}
+function catLabel(c){var m=CAT_LABEL[LANG]||CAT_LABEL.en;return m[c]||c;}
+function setLang(l){if(!I18N[l])return;LANG=l;lsSet('gmd_lang',l);if(window.AndroidBridge&&AndroidBridge.setLang)AndroidBridge.setLang(l);applyLang();}
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(function(el){el.textContent=t(el.getAttribute('data-i18n'));});
+  document.querySelectorAll('[data-i18n-ph]').forEach(function(el){el.setAttribute('placeholder',t(el.getAttribute('data-i18n-ph')));});
+  document.querySelectorAll('[data-i18n-title]').forEach(function(el){var v=t(el.getAttribute('data-i18n-title'));el.setAttribute('title',v);el.setAttribute('aria-label',v);});
+  document.querySelectorAll('.chip').forEach(function(c){var k=c.getAttribute('data-cat');c.textContent=(k==='all')?t('chipAll'):(k==='fav')?t('chipFav'):catLabel(k);});
+  var le=document.getElementById('langEn'),lf=document.getElementById('langFr');
+  if(le&&lf){le.classList.toggle('on',LANG==='en');lf.classList.toggle('on',LANG==='fr');}
+  GLOSS_KEYS=Object.keys(glossDict()).sort(function(a,b){return b.length-a.length;});
+  renderTip();renderQuiz();
+  if(ALL.length){render();renderDigest();updateHype();renderTopics();}
+}
+
 document.documentElement.style.setProperty('--fs',SETTINGS.fontScale||1);
 /* ================= Filters (accent-insensitive folding) =================
    Keyword lists below intentionally mix French and English: they match
@@ -613,7 +706,7 @@ function onFetchDone(id,b64){
   try{var bin=atob(b64),arr=new Uint8Array(bin.length);for(var i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);p.res(new TextDecoder('utf-8').decode(arr));}catch(e){p.res('');}
 }
 /* ================= Translation (to English) ================= */
-function gtxUrl(q){return 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=en&dt=t&q='+encodeURIComponent(q);}
+function gtxUrl(q){return 'https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl='+LANG+'&dt=t&q='+encodeURIComponent(q);}
 function translateChunk(arr){
   if(!arr.length) return Promise.resolve([]);
   return bridgeFetch(gtxUrl(arr.join('\n[[[0]]]\n'))).then(function(raw){
@@ -631,9 +724,9 @@ function translateTexts(texts){
 var speaking=false;
 function speak(text){
   stopSpeak();
-  if(window.AndroidBridge&&AndroidBridge.speak){AndroidBridge.speak(text);speaking=true;return;}
+  if(window.AndroidBridge&&AndroidBridge.speak){AndroidBridge.speak(text,LANG);speaking=true;return;}
   if(window.speechSynthesis){
-    var u=new SpeechSynthesisUtterance(text);u.lang='en-US';u.rate=1;
+    var u=new SpeechSynthesisUtterance(text);u.lang=loc();u.rate=1;
     u.onend=function(){speaking=false;syncTtsBtns();};
     speechSynthesis.speak(u);speaking=true;
   }
@@ -648,7 +741,7 @@ function syncTtsBtns(){
   var rb=document.getElementById('rTts');if(rb)rb.classList.toggle('on',speaking);
 }
 /* ================= Tip of the day ================= */
-var TIPS=[
+var TIPS={en:[
   {t:"Turn on Steam Guard and 2FA on your game accounts",x:"Steam, Epic, PSN and Xbox accounts full of games and skins are prime targets. Two-factor authentication (mobile app) blocks almost every account theft, even if your password leaks."},
   {t:"Don't pre-order blind",x:"Wait for reviews and player feedback on launch day. Pre-order bonuses are rarely worth it, and a broken launch game gets fixed (or not) months later."},
   {t:"Back up your saves, not just to the cloud",x:"Steam Cloud can overwrite a corrupted save. Now and then, copy your save folders to an external drive — especially before installing mods."},
@@ -664,18 +757,36 @@ var TIPS=[
   {t:"Jailbreak and custom firmware: never on your main console",x:"Modifying a console that is connected to online services (PSN, eShop, Xbox Live) almost guarantees a permanent account ban. Tinkerers keep a dedicated, offline console and do their purchases elsewhere."},
   {t:"Disable one-click purchases on the stores",x:"Between virtual currencies, loot boxes and DLC, the bill climbs fast. Require a password for every purchase — essential if kids play on your machine."},
   {t:"Limit cross-play if you keep running into cheaters",x:"On console, many games let you turn off cross-play with PC: you then face only controller players, where aimbot and wallhack cheats are far rarer."}
-];
-(function(){
+],fr:[
+  {t:"Active Steam Guard et la 2FA sur tes comptes de jeu",x:"Les comptes Steam, Epic, PSN ou Xbox pleins de jeux et de skins sont des cibles de choix. La double authentification (appli mobile) bloque la quasi-totalité des vols de compte, même si ton mot de passe fuite."},
+  {t:"Ne précommande pas à l’aveugle",x:"Attends les tests et les retours des joueurs le jour de la sortie. Les bonus de précommande sont rarement intéressants, et un jeu cassé au lancement se corrige (ou pas) des mois plus tard."},
+  {t:"Sauvegarde tes parties, pas seulement dans le cloud",x:"Steam Cloud peut écraser une sauvegarde corrompue. Copie de temps en temps tes dossiers de saves sur un disque externe — surtout avant d’installer des mods."},
+  {t:"Les skins « gratuits », c’est presque toujours une arnaque",x:"Générateurs de V-Bucks, sites de skins CS2, cadeaux Discord : ce sont des pièges à identifiants. Aucun site tiers ne peut te donner de la monnaie de jeu gratuite."},
+  {t:"Joue en filaire pour réduire le lag",x:"Un câble Ethernet élimine les pertes de paquets du Wi-Fi et stabilise ton ping. Si c’est impossible, rapproche-toi de la box ou passe en Wi-Fi 5 GHz/6 GHz, et évite les téléchargements pendant tes parties."},
+  {t:"Mets à jour tes pilotes graphiques",x:"NVIDIA et AMD publient des pilotes optimisés pour chaque grosse sortie, avec parfois +10 à 20 % de performances. GeForce Experience ou AMD Adrenalin le font en deux clics."},
+  {t:"Compare les prix avant d’acheter",x:"IsThereAnyDeal.com te montre l’historique des prix d’un jeu sur toutes les boutiques officielles. La plupart des jeux sont à −50 % moins d’un an après leur sortie."},
+  {t:"Méfie-toi des sites de clés pas chères",x:"Les clés du marché gris sont parfois achetées avec des cartes volées : l’éditeur peut les révoquer et tu perds le jeu. Privilégie les vendeurs officiels ou les soldes."},
+  {t:"Installe tes jeux sur un SSD",x:"Les temps de chargement fondent et certains jeux récents streament leurs textures depuis le disque : sur un HDD, ça rame. Garde le SSD pour les jeux auxquels tu joues, archive le reste."},
+  {t:"Dépoussière ta console et ton PC",x:"La poussière fait chauffer, et la chauffe fait baisser les performances (throttling) voire planter. Un coup de soufflette tous les 6 mois dans les aérations prolonge la vie de ta machine."},
+  {t:"Active le VRR si ton écran le permet",x:"G-Sync, FreeSync ou VRR HDMI 2.1 synchronisent l’écran avec le jeu : fini les déchirures d’image et les saccades, même quand le framerate varie. Ça se règle une fois et ça change tout."},
+  {t:"Modding : sauvegarde d’abord, et télécharge au bon endroit",x:"Avant d’installer des mods, copie tes saves et note ta version du jeu. Passe par des plateformes connues comme Nexus Mods ou le Workshop Steam — les .exe de mods inconnus cachent parfois des malwares."},
+  {t:"Jailbreak et CFW : jamais avec ta console principale",x:"Modifier une console connectée au réseau (PSN, eShop, Xbox Live), c’est le ban définitif du compte assuré. Les bidouilleurs utilisent une console dédiée, hors ligne, et gardent leurs achats ailleurs."},
+  {t:"Désactive l’achat en un clic sur les stores",x:"Entre les monnaies virtuelles, les lootboxes et les DLC, la facture grimpe vite. Exige un mot de passe pour chaque achat — indispensable si des enfants jouent sur ta machine."},
+  {t:"Limite le crossplay si tu subis les tricheurs",x:"Sur console, beaucoup de jeux permettent de désactiver le jeu croisé avec PC : tu affrontes alors uniquement des joueurs manette, où les cheats aimbot/wallhack sont beaucoup plus rares."}
+]};
+function renderTip(){
   var start=new Date(new Date().getFullYear(),0,0);
   var day=Math.floor((new Date()-start)/86400000);
-  var tip=TIPS[day%TIPS.length];
+  var tips=TIPS[LANG]||TIPS.en;
+  var tip=tips[day%tips.length];
   document.getElementById('tipTitle').textContent=tip.t;
   document.getElementById('tipText').textContent=tip.x;
-  document.getElementById('todaySub').textContent=new Date().toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-})();
+  document.getElementById('todaySub').textContent=new Date().toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+renderTip();
 /* ================= Model / rendering ================= */
 var ALL=[],CURRENT='all',QUERY='';
-var CAT_LABEL={actu:"News",console:"Consoles",pc:"PC",modding:"Modding",esport:"Esports"};
+var CAT_LABEL={en:{actu:"News",console:"Consoles",pc:"PC",modding:"Modding & retro",esport:"Esports"},fr:{actu:"Actu",console:"Consoles",pc:"PC",modding:"Modding & rétro",esport:"Esport"}};
 var NOIMG='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.1-3.1a2 2 0 0 0-2.8 0L6 21"/></svg>';
 var PIN='<svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M19 21l-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"/></svg>';
 function esc(s){var d=document.createElement('div');d.textContent=s||'';return d.innerHTML;}
@@ -683,9 +794,9 @@ function imgFallback(el){el.parentNode.innerHTML="<div class='noimg'>"+NOIMG+"</
 function timeAgo(iso){
   if(!iso)return"";var d=new Date(iso);if(isNaN(d))return"";
   var s=(Date.now()-d.getTime())/1000;
-  if(s<3600)return Math.max(1,Math.round(s/60))+" min ago";
-  if(s<86400)return Math.round(s/3600)+" h ago";
-  var days=Math.round(s/86400);return days<=1?"yesterday":days+" d ago";
+  if(s<3600)return tp('taMin',Math.max(1,Math.round(s/60)));
+  if(s<86400)return tp('taHour',Math.round(s/3600));
+  var days=Math.round(s/86400);return days<=1?t('taYesterday'):tp('taDay',days);
 }
 function readMins(a){
   if(a.mins)return a.mins;
@@ -829,22 +940,22 @@ function cardHtml(a){
   var b=a.cat||'tech';
   var isFav=!!FAV[a.link],isRead=!!READ[a.link],isPin=(TOPICS.length&&matchesTopics(a)&&CURRENT!=='fav');var sv=severityOf(a);
   var thumb=a.img?"<img src='"+esc(a.img)+"' loading='lazy' referrerpolicy='no-referrer' alt='' onerror=\"imgFallback(this)\">":"<div class='noimg'>"+NOIMG+"</div>";
-  var tr=a.translated?" <span class='tr'>· translated</span>":"";
-  var rel=(a.related&&a.related.length)?"<span class='relnote'>+"+a.related.length+" source"+(a.related.length>1?'s':'')+"</span>":"";
+  var tr=a.translated?" <span class='tr'>"+t('translated')+"</span>":"";
+  var rel=(a.related&&a.related.length)?"<span class='relnote'>"+tp(a.related.length>1?'relN':'rel1',a.related.length)+"</span>":"";
   return "<a class='card"+(isRead?' read':'')+(isPin?' pin':'')+(sv===2?' crit':'')+"' data-link='"+esc(a.link)+"'>"+
-    "<div class='thumb'><span class='badge b-"+b+"'><i class='cdot'></i>"+(CAT_LABEL[b]||'News')+"</span>"+thumb+
-      "<button class='heart"+(isFav?' on':'')+"' data-fav='"+esc(a.link)+"' aria-label='Save story'>"+(isFav?'♥':'♡')+"</button>"+
-      (isPin?"<span class='pinstar' title='Tracked topic'>"+PIN+"</span>":"")+"</div>"+
-    "<div class='body'><div class='meta'><span class='lft'><span class='cat'><i class='cdot c-"+b+"'></i>"+(CAT_LABEL[b]||'News')+"</span>"+(sv===2?"<span class='alertpill'>ALERT</span>":"")+"<span>"+timeAgo(a.date)+"</span></span><span>"+readMins(a)+" min read</span></div>"+
+    "<div class='thumb'><span class='badge b-"+b+"'><i class='cdot'></i>"+catLabel(b)+"</span>"+thumb+
+      "<button class='heart"+(isFav?' on':'')+"' data-fav='"+esc(a.link)+"' aria-label='"+t('saveStory')+"'>"+(isFav?'♥':'♡')+"</button>"+
+      (isPin?"<span class='pinstar' title='"+t('trackedTopic')+"'>"+PIN+"</span>":"")+"</div>"+
+    "<div class='body'><div class='meta'><span class='lft'><span class='cat'><i class='cdot c-"+b+"'></i>"+catLabel(b)+"</span>"+(sv===2?"<span class='alertpill'>"+t('alertPill')+"</span>":"")+"<span>"+timeAgo(a.date)+"</span></span><span>"+tp('minRead',readMins(a))+"</span></div>"+
     "<h3>"+markText(a.title)+"</h3><p class='excerpt'>"+esc(a.excerpt)+(a.excerpt&&a.excerpt.length>=180?'…':'')+"</p>"+
     "<div class='meta foot'><span class='srcname'>"+esc(a.source)+tr+"</span>"+rel+"</div></div></a>";
 }
 function render(){
   var list=visibleList();
-  document.getElementById('count').textContent=list.length+' stor'+(list.length===1?'y':'ies')+(CURRENT==='fav'?' saved':'');
+  document.getElementById('count').textContent=tp(list.length===1?'count1':'countN',list.length)+(CURRENT==='fav'?' '+t('savedSuffix'):'');
   if(!list.length){
     grid.innerHTML='';statusEl.style.display='block';
-    statusEl.innerHTML=CURRENT==='fav'?"<div class='big'>No saved stories</div><div class='hint'>Tap the heart on a story to keep it here.</div>":(ALL.length?"<div class='big'>Nothing in this section</div><div class='hint'>Try another filter or search.</div>":"<div class='big'>No stories loaded</div><div class='hint'>Check your connection, then tap the refresh button.</div>");
+    statusEl.innerHTML=CURRENT==='fav'?"<div class='big'>"+t('noFav1')+"</div><div class='hint'>"+t('noFav2')+"</div>":(ALL.length?"<div class='big'>"+t('noCat1')+"</div><div class='hint'>"+t('noCat2')+"</div>":"<div class='big'>"+t('noLoad1')+"</div><div class='hint'>"+t('noLoad2')+"</div>");
     return;
   }
   statusEl.style.display='none';
@@ -859,9 +970,9 @@ function renderDigest(){
 }
 function renderTopics(){
   var el=document.getElementById('topics');
-  var h="<span class='tlab'>Tracked:</span>";
+  var h="<span class='tlab'>"+t('tracked')+"</span>";
   TOPICS.forEach(function(kw){h+="<span class='topic'>"+esc(kw)+"<b data-deltopic='"+esc(kw)+"'>✕</b></span>";});
-  h+="<button class='topic-add' id='addTopic'>+ track a topic</button>";
+  h+="<button class='topic-add' id='addTopic'>"+t('addTopic')+"</button>";
   el.innerHTML=h;
 }
 function showSkeletons(){
@@ -877,15 +988,15 @@ function baseU(u){return(u||'').split('?')[0].replace(/-\d+x\d+(\.\w+)$/,'$1');}
 function findByLink(link){for(var i=0;i<ALL.length;i++){if(ALL[i].link===link)return ALL[i];}if(FAV[link])return FAV[link];return null;}
 function renderReader(a){
   var isFav=!!FAV[a.link];
-  var h='<div class="rbar"><button class="rbtn" onclick="closeReader()" aria-label="Close"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button><div class="rgroup">'+
-    '<button class="rbtn'+(speaking?' on':'')+'" id="rTts" onclick="toggleReadAloud()" title="Read aloud" aria-label="Read aloud"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>'+
-    '<button class="rbtn" onclick="shareArticle(readerCur)" title="Share" aria-label="Share"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg></button>'+
-    '<button class="rbtn" onclick="voteSource(readerCur.source,1);toast(\'More from \'+readerCur.source)" title="More from this source" aria-label="More from this source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>'+
-    '<button class="rbtn" onclick="voteSource(readerCur.source,-1);toast(\'Less from \'+readerCur.source)" title="Less from this source" aria-label="Less from this source"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12h14"/></svg></button>'+
-    '<button class="rbtn fav'+(isFav?' on':'')+'" onclick="toggleFav(readerCur)" aria-label="Save story">'+(isFav?'♥':'♡')+'</button></div></div>';
-  h+='<div class="rmeta"><span class="badge b-'+(a.cat||'tech')+'"><i class="cdot"></i>'+(CAT_LABEL[a.cat]||'News')+'</span><span class="rsrc">'+esc(a.source)+'</span><span>'+timeAgo(a.date)+'</span>'+(a.translated?'<span class="tr">translated</span>':'')+'</div>';
+  var h='<div class="rbar"><button class="rbtn" onclick="closeReader()" aria-label="'+t('close')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button><div class="rgroup">'+
+    '<button class="rbtn'+(speaking?' on':'')+'" id="rTts" onclick="toggleReadAloud()" title="'+t('readAloud')+'" aria-label="'+t('readAloud')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></button>'+
+    '<button class="rbtn" onclick="shareArticle(readerCur)" title="'+t('share')+'" aria-label="'+t('share')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M21 14v5a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5"/></svg></button>'+
+    '<button class="rbtn" onclick="voteSource(readerCur.source,1);toast(\'More from \'+readerCur.source)" title="'+t('moreSrc')+'" aria-label="'+t('moreSrc')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>'+
+    '<button class="rbtn" onclick="voteSource(readerCur.source,-1);toast(\'Less from \'+readerCur.source)" title="'+t('lessSrc')+'" aria-label="'+t('lessSrc')+'"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M5 12h14"/></svg></button>'+
+    '<button class="rbtn fav'+(isFav?' on':'')+'" onclick="toggleFav(readerCur)" aria-label="'+t('saveStory')+'">'+(isFav?'♥':'♡')+'</button></div></div>';
+  h+='<div class="rmeta"><span class="badge b-'+(a.cat||'tech')+'"><i class="cdot"></i>'+catLabel(a.cat||'tech')+'</span><span class="rsrc">'+esc(a.source)+'</span><span>'+timeAgo(a.date)+'</span>'+(a.translated?'<span class="tr">translated</span>':'')+'</div>';
   h+='<h2 class="rtitle">'+markText(a.title)+'</h2>';
-  h+='<div class="rtime">'+readMins(a)+' min read</div>';
+  h+='<div class="rtime">'+tp('minRead',readMins(a))+'</div>';
   if(a.img)h+='<img src="'+esc(a.img)+'" referrerpolicy="no-referrer" onerror="this.remove()">';
   var seen=[baseU(a.img)];
   if(a.blocks&&a.blocks.length){
@@ -894,20 +1005,20 @@ function renderReader(a){
       else if(bk.t==='h'){h+='<h3>'+markText(bk.v)+'</h3>';}
       else{h+='<p>'+markText(bk.v)+'</p>';}
     });
-    if(a.lang!=='en'&&!a.bodyTranslated){h+='<div class="rload">Translating…</div>';}
+    if(a.lang!==LANG&&!a.bodyTranslated){h+='<div class="rload">'+t('translating')+'</div>';}
   } else if(a.blocks!==null){
-    h+='<p>'+esc(a.excerpt)+'…</p><p class="rnote">The full text could not be extracted — open the original story below.</p>';
-  } else { h+='<div class="rload">Loading story…</div>'; }
+    h+='<p>'+esc(a.excerpt)+'…</p><p class="rnote">'+t('noFull')+'</p>';
+  } else { h+='<div class="rload">'+t('loading')+'</div>'; }
   if(a.related&&a.related.length){
-    h+='<div class="rrelated"><div class="rl">Also covered by</div>';
+    h+='<div class="rrelated"><div class="rl">'+t('alsoBy')+'</div>';
     a.related.forEach(function(r){h+='<a href="'+esc(r.link)+'" target="_blank" rel="noopener">'+esc(r.source)+' ↗</a>';});
     h+='</div>';
   }
-  h+='<br><a class="rsource" href="'+esc(a.link)+'" target="_blank" rel="noopener">Open source: '+esc(a.source)+' ↗</a>';
+  h+='<br><a class="rsource" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+t('openSrc').replace('{s}',esc(a.source))+' ↗</a>';
   readerEl.innerHTML=h;enhanceReader();
 }
 function translateBody(a,done){
-  if(a.lang==='en'||a.bodyTranslated||!a.blocks||!a.blocks.length){done();return;}
+  if(a.lang===LANG||a.bodyTranslated||!a.blocks||!a.blocks.length){done();return;}
   var idx=[],texts=[];a.blocks.forEach(function(b,i){if(b.t!=='img'){idx.push(i);texts.push(b.v);}});
   if(!texts.length){a.bodyTranslated=true;done();return;}
   translateTexts(texts).then(function(tr){for(var m=0;m<idx.length&&m<tr.length;m++){a.blocks[idx[m]].v=tr[m];}a.bodyTranslated=true;a.translated=true;done();});
@@ -982,6 +1093,8 @@ document.getElementById('tgTranslate').addEventListener('click',function(){SETTI
 document.getElementById('tgCluster').addEventListener('click',function(){SETTINGS.cluster=!SETTINGS.cluster;lsSet('gmd_settings',SETTINGS);this.classList.toggle('on',SETTINGS.cluster);});
 document.getElementById('fsPlus').addEventListener('click',function(){SETTINGS.fontScale=Math.min(1.4,(SETTINGS.fontScale||1)+0.1);applyFont();});
 document.getElementById('fsMinus').addEventListener('click',function(){SETTINGS.fontScale=Math.max(0.85,(SETTINGS.fontScale||1)-0.1);applyFont();});
+document.getElementById('langEn').addEventListener('click',function(){setLang('en');});
+document.getElementById('langFr').addEventListener('click',function(){setLang('fr');});
 function applyFont(){document.documentElement.style.setProperty('--fs',SETTINGS.fontScale);lsSet('gmd_settings',SETTINGS);}
 document.getElementById('srcGrid').addEventListener('click',function(e){
   var t=e.target.closest('.srctag');if(!t)return;
@@ -992,7 +1105,7 @@ document.getElementById('srcGrid').addEventListener('click',function(e){
 document.getElementById('ttsAllBtn').addEventListener('click',function(){
   if(speaking){stopSpeak();return;}
   var top=ALL.slice(0,5);if(!top.length)return;
-  var txt="Here are today's top stories. "+top.map(function(a,i){return (i+1)+'. '+a.title+'.';}).join(' ');
+  var txt=t('podcastIntro')+top.map(function(a,i){return (i+1)+'. '+a.title+'.';}).join(' ');
   speak(txt);syncTtsBtns();
 });
 document.getElementById('refreshBtn').addEventListener('click',load);
@@ -1008,7 +1121,7 @@ function normalize(items){
 function afterData(){render();renderDigest();saveHistory();}
 function translateCards(){
   if(!SETTINGS.translate)return;
-  var fr=ALL.filter(function(a){return a.lang!=='en'&&!a.translated;});
+  var fr=ALL.filter(function(a){return a.lang!==LANG&&!a.translated;});
   if(!fr.length)return;
   var texts=[];fr.forEach(function(a){texts.push(a.title);texts.push(a.excerpt);});
   translateTexts(texts).then(function(tr){fr.forEach(function(a,i){if(tr[i*2]!==undefined&&tr[i*2]){a.title=tr[i*2];a.excerpt=tr[i*2+1]||a.excerpt;a.translated=true;}});afterData();saveCache();});
@@ -1038,10 +1151,11 @@ function load(){
   });
 }
 renderTopics();
-/* ============ Extras: hype level, glossary, TL;DR, podcast, theme, votes, history, share, quiz ============ */
-var GLOSSARY={"fps":"First-person shooter, where you see through the character's eyes. Also short for frames per second, the measure of a game's smoothness.","rpg":"Role-playing game: you play a character who gains experience, levels up and equips gear through a story-rich adventure.","jrpg":"Japanese role-playing game, with the style and storytelling typical of Japanese productions like Final Fantasy or Dragon Quest.","mmo":"Massively multiplayer online game where thousands of players share the same persistent world, like World of Warcraft.","moba":"Online battle arena where two teams of heroes fight to destroy the enemy base, like League of Legends or Dota 2.","battle royale":"Mode where dozens of players fight on a shrinking map until a single one is left standing, like Fortnite or Warzone.","roguelike":"Game where every death sends you back to zero, with randomly generated levels: every run is different.","metroidvania":"Exploration game where new abilities gradually unlock previously unreachable areas, in the vein of Metroid and Castlevania.","soulslike":"Demanding action game inspired by Dark Souls: punishing fights, a costly death, and real satisfaction when you progress.","aaa":"Very big-budget game produced by a major studio — the blockbuster of video games.","dlc":"Downloadable content sold after a game's release: new quests, characters, maps or cosmetics.","season pass":"Bundle giving early access to several future contents of a game, usually cheaper than buying them one by one.","battle pass":"Tiered reward track unlocked by playing during a season, with a free path and a paid path.","free-to-play":"Game that is free to download and funded by in-game purchases: cosmetics, battle pass or virtual currency.","pay-to-win":"A game where paying gives a real advantage over other players, beyond cosmetics. Widely frowned upon by the community.","microtransaction":"Small real-money purchase inside a game: skins, virtual currency, boosts. The core business model of free games.","lootbox":"A chest with random content bought with real money or in-game currency, criticized for its similarity to gambling.","gacha":"Paid random draw system inherited from Japanese mobile games to obtain rare characters or items, as in Genshin Impact.","skin":"Purely cosmetic item that changes the look of a character or weapon without affecting its performance.","cross-play":"Playing together online from different platforms: PC, PlayStation, Xbox or Switch.","crossplay":"Playing together online from different platforms: PC, PlayStation, Xbox or Switch.","early access":"A game sold before it is finished: you play it during development and it improves with every update.","beta":"Test version of a game, open to everyone or by invitation, used to fix bugs and stress servers before the real launch.","patch":"Update that fixes bugs, rebalances the game or adds content.","day one":"The release day of a game. A 'day-one patch' is the update downloaded at launch to fix last-minute issues.","nerf":"Deliberate weakening of a weapon, character or ability deemed too strong, through a balance update.","buff":"Strengthening of a weapon, character or ability deemed too weak — the opposite of a nerf.","hitbox":"Invisible area around a character that decides what counts as a hit. A badly tuned hitbox makes fights feel unfair.","lag":"Delay between your action and the game registering it, caused by a slow connection or an overloaded server.","ping":"Time in milliseconds for a message to reach the server and come back. The lower it is, the more responsive online play feels.","netcode":"All the techniques that synchronize an online match between players. Good netcode hides lag; bad netcode is infuriating.","matchmaking":"System that automatically builds online matches by grouping players of similar skill.","meta":"The set of strategies, weapons or characters considered the strongest at the moment in a competitive game.","farming":"Repeating a game activity (killing monsters, replaying a mission) to accumulate resources, experience or items.","speedrun":"The discipline of finishing a game as fast as possible, exploiting every shortcut and sometimes glitches, against the clock.","glitch":"A game bug repurposed by players to clip through walls, duplicate items or skip part of a level.","rng":"The randomness generated by the game (loot, critical hits, drops). 'Good RNG' means lucky, 'bad RNG' means unlucky.","pvp":"Player versus player: fights opposing real people, in duels or teams.","pve":"Player versus environment: you fight game-controlled enemies, alone or in co-op.","hud":"Interface shown on screen during the game: health, ammo, minimap. A good HUD informs without getting in the way.","ray tracing":"Rendering technique that simulates the real path of light for realistic reflections and shadows. Beautiful, but hardware-hungry.","dlss":"NVIDIA technology that uses AI to upscale a lower-resolution image to high definition: a big performance gain.","cloud gaming":"Playing by streaming games that run on remote servers, no install needed, like GeForce Now or Xbox Cloud Gaming.","remaster":"Improved version of an old game: modernized textures, resolution and comfort, but the same game underneath.","remake":"An old game rebuilt from scratch with current technology, like Resident Evil 4 or Final Fantasy VII Remake.","emulator":"Software that mimics a console on another device (PC, phone) to run its games. Legal, as long as you own the games.","rom":"Digital copy of a game (cartridge or disc) used by emulators. Downloading ROMs of games you don't own is illegal.","romhack":"Fan-made modified version of a retro game: new levels, translations, new difficulty.","homebrew":"Unofficial amateur app or game that runs on a console, usually once it has been unlocked.","custom firmware":"Modified operating system installed on a console to unlock it: it opens the door to homebrews but risks an online ban.","jailbreak":"Unlocking a console or device to bypass the manufacturer's restrictions and install unauthorized software.","backward compatibility":"A console's ability to run games from previous generations.","anticheat":"Protection software that detects and bans cheaters in online games, like Easy Anti-Cheat or BattlEye.","aimbot":"Cheat that aims automatically for the player in shooters. Getting caught means a ban.","crunch":"Period of intense overtime imposed on teams to ship a game on time, regularly denounced in the industry.","port":"Adapting a game to a different machine than the original one, e.g. a console game coming to PC.","exclusive":"A game available on a single platform, a major commercial weapon between PlayStation, Xbox and Nintendo.","game engine":"The software that runs the game: graphics, physics, sound. The best known are Unreal Engine and Unity.","open world":"Open-world game: one large map to explore freely, without forced corridors, like GTA or Zelda.","indie":"Independent game made by a small studio without a big publisher, often more original and cheaper than a AAA."};
-var GLOSS_KEYS=Object.keys(GLOSSARY).sort(function(a,b){return b.length-a.length;});
-var QUIZ=[{"q":"What is the best-selling console of all time?","options":["The PlayStation 2","The Wii","The Game Boy"],"correct":0,"explain":"The PS2 has sold around 160 million units since 2000 — a record the Switch is now chasing."},{"q":"Who created Mario?","options":["Hideo Kojima","Shigeru Miyamoto","Satoru Iwata"],"correct":1,"explain":"Shigeru Miyamoto created Mario, but also Zelda and Donkey Kong. He is Nintendo's most influential game designer."},{"q":"In which game does Mario first appear?","options":["Super Mario Bros.","Mario Kart","Donkey Kong (1981)"],"correct":2,"explain":"Mario debuts in 1981 in Donkey Kong under the name 'Jumpman', before getting his own series in 1985 with Super Mario Bros."},{"q":"What does 'RPG' stand for?","options":["Role-Playing Game","Real Player Game","Rapid Pixel Graphics"],"correct":0,"explain":"In an RPG you play a character who progresses: levels, gear, story choices. Examples: Final Fantasy, Baldur's Gate."},{"q":"Who owns the Steam store?","options":["Microsoft","Valve","Epic Games"],"correct":1,"explain":"Valve, the studio behind Half-Life and Counter-Strike, launched Steam in 2003. It is now the biggest PC game store."},{"q":"What is a speedrun?","options":["An extreme difficulty mode","A race in a driving game","Finishing a game as fast as possible, against the clock"],"correct":2,"explain":"Speedrunners optimize every second, sometimes using glitches. Records are verified and ranked by category on speedrun.com."},{"q":"What is an emulator?","options":["Software that mimics a console to run its games elsewhere","An anti-cheat program","An all-platform controller"],"correct":0,"explain":"An emulator reproduces a console's behavior on a PC or phone. The tool is legal; downloading games you don't own is not."},{"q":"What risk does a jailbroken / CFW console face when used online?","options":["Nothing at all","A permanent ban from online services","Just an email warning"],"correct":1,"explain":"Nintendo, Sony and Microsoft detect modified consoles and ban both the console and the account. Tinkerers keep a dedicated offline machine."},{"q":"What does 'free-to-play' (F2P) mean?","options":["A game you can play for free, funded by in-game purchases","A game bundled with a console","A free trial weekend"],"correct":0,"explain":"Fortnite, Warzone or League of Legends are free: skins, battle passes and virtual currencies make their money."},{"q":"What is SEGA's mascot?","options":["Pac-Man","Pikachu","Sonic"],"correct":2,"explain":"Sonic the hedgehog was born in 1991 to rival Mario, back when SEGA still made consoles like the Mega Drive."},{"q":"In the Zelda series, what is the hero's name?","options":["Link","Zelda","Ganon"],"correct":0,"explain":"Classic trap: Zelda is the princess, Ganon the villain. The hero in the green tunic is Link."},{"q":"What is a 'nerf' in a game?","options":["A display bug","The weakening of an overpowered weapon or character","A temporary XP bonus"],"correct":1,"explain":"When something dominates the meta, developers 'nerf' it with a balance patch. The opposite (buffing) is called a buff."},{"q":"What is cross-play?","options":["Playing two players on the same screen","Switching characters mid-match","Playing together from different platforms (PC, consoles)"],"correct":2,"explain":"Cross-play brings PC, PlayStation, Xbox and Switch players into the same matches, as in Fortnite or Rocket League."},{"q":"What is a ROM?","options":["The digital copy of a game, readable by an emulator","A spare console part","A memory card format"],"correct":0,"explain":"A ROM holds the game data extracted from the cartridge or disc. You may only legally use ones for games you own."},{"q":"What is NVIDIA's DLSS for?","options":["Cooling the graphics card","Gaining performance through AI upscaling","Blocking cheat software"],"correct":1,"explain":"The game is rendered at a lower resolution then upscaled by AI: nearly identical image, but many more frames per second. AMD's equivalent is FSR."},{"q":"What is the difference between a remake and a remaster?","options":["None, it's the same word","The remaster is always free","A remake is rebuilt from scratch, a remaster improves the original"],"correct":2,"explain":"A remaster polishes what exists (textures, resolution). A remake rebuilds the whole game with modern tech, like Resident Evil 4 (2023)."},{"q":"What is a roguelike?","options":["A game with randomly generated levels where death resets everything","A stealth game","An advanced photo mode"],"correct":0,"explain":"Every run is unique and death is permanent: Hades, Balatro and The Binding of Isaac are built on this principle."},{"q":"The Game Pass is the subscription service of...","options":["PlayStation","Xbox (Microsoft)","Nintendo"],"correct":1,"explain":"The Game Pass gives access to a game catalogue for a monthly fee, including Xbox exclusives on day one. Sony answers with PS Plus."},{"q":"What is RNG?","options":["A game's graphics engine","The world player ranking","The randomness generated by the game (loot, crits...)"],"correct":2,"explain":"RNG = Random Number Generator. It decides which loot drops or whether a hit crits — hence 'good' or 'bad' RNG."},{"q":"Who originally created Minecraft?","options":["Markus 'Notch' Persson","Electronic Arts","Ubisoft"],"correct":0,"explain":"Developed solo by Notch in 2009 then by his studio Mojang, Minecraft was bought by Microsoft in 2014 for $2.5 billion."},{"q":"What is a homebrew on console?","options":["An esports energy drink","An unofficial amateur app or game","An official texture pack"],"correct":1,"explain":"Homebrews are made by enthusiasts and run on unlocked consoles: emulators, utilities, original games."},{"q":"Hideo Kojima is the creator of...","options":["Metal Gear Solid and Death Stranding","Super Mario","FIFA"],"correct":0,"explain":"A Japanese video game legend, Kojima invented the modern stealth genre with Metal Gear before founding Kojima Productions."},{"q":"What is 'pay-to-win'?","options":["Earning money by playing","A paid-entry tournament","When paying gives a real advantage over other players"],"correct":2,"explain":"A game is pay-to-win when money buys power (weapons, stats), not just cosmetics. Players criticize it heavily."},{"q":"A hitbox is...","options":["The invisible zone that decides whether a hit lands","A collector's box","The settings menu"],"correct":0,"explain":"Every character or object has a collision zone. If it is bigger or smaller than the visual, hits feel unfair."},{"q":"What is esports?","options":["An official Olympic sport","Competitive video gaming, with pro teams and tournaments","A virtual-reality sports game"],"correct":1,"explain":"League of Legends, Counter-Strike and Rocket League have pro leagues, salaries, transfers and finals in stadiums."}];
+/* ============ Extras: threat level, glossary, TL;DR, podcast, theme, votes, history, share, quiz ============ */
+var GLOSSARY={en:{"fps":"First-person shooter, where you see through the character's eyes. Also short for frames per second, the measure of a game's smoothness.","rpg":"Role-playing game: you play a character who gains experience, levels up and equips gear through a story-rich adventure.","jrpg":"Japanese role-playing game, with the style and storytelling typical of Japanese productions like Final Fantasy or Dragon Quest.","mmo":"Massively multiplayer online game where thousands of players share the same persistent world, like World of Warcraft.","moba":"Online battle arena where two teams of heroes fight to destroy the enemy base, like League of Legends or Dota 2.","battle royale":"Mode where dozens of players fight on a shrinking map until a single one is left standing, like Fortnite or Warzone.","roguelike":"Game where every death sends you back to zero, with randomly generated levels: every run is different.","metroidvania":"Exploration game where new abilities gradually unlock previously unreachable areas, in the vein of Metroid and Castlevania.","soulslike":"Demanding action game inspired by Dark Souls: punishing fights, a costly death, and real satisfaction when you progress.","aaa":"Very big-budget game produced by a major studio — the blockbuster of video games.","dlc":"Downloadable content sold after a game's release: new quests, characters, maps or cosmetics.","season pass":"Bundle giving early access to several future contents of a game, usually cheaper than buying them one by one.","battle pass":"Tiered reward track unlocked by playing during a season, with a free path and a paid path.","free-to-play":"Game that is free to download and funded by in-game purchases: cosmetics, battle pass or virtual currency.","pay-to-win":"A game where paying gives a real advantage over other players, beyond cosmetics. Widely frowned upon by the community.","microtransaction":"Small real-money purchase inside a game: skins, virtual currency, boosts. The core business model of free games.","lootbox":"A chest with random content bought with real money or in-game currency, criticized for its similarity to gambling.","gacha":"Paid random draw system inherited from Japanese mobile games to obtain rare characters or items, as in Genshin Impact.","skin":"Purely cosmetic item that changes the look of a character or weapon without affecting its performance.","cross-play":"Playing together online from different platforms: PC, PlayStation, Xbox or Switch.","crossplay":"Playing together online from different platforms: PC, PlayStation, Xbox or Switch.","early access":"A game sold before it is finished: you play it during development and it improves with every update.","beta":"Test version of a game, open to everyone or by invitation, used to fix bugs and stress servers before the real launch.","patch":"Update that fixes bugs, rebalances the game or adds content.","day one":"The release day of a game. A 'day-one patch' is the update downloaded at launch to fix last-minute issues.","nerf":"Deliberate weakening of a weapon, character or ability deemed too strong, through a balance update.","buff":"Strengthening of a weapon, character or ability deemed too weak — the opposite of a nerf.","hitbox":"Invisible area around a character that decides what counts as a hit. A badly tuned hitbox makes fights feel unfair.","lag":"Delay between your action and the game registering it, caused by a slow connection or an overloaded server.","ping":"Time in milliseconds for a message to reach the server and come back. The lower it is, the more responsive online play feels.","netcode":"All the techniques that synchronize an online match between players. Good netcode hides lag; bad netcode is infuriating.","matchmaking":"System that automatically builds online matches by grouping players of similar skill.","meta":"The set of strategies, weapons or characters considered the strongest at the moment in a competitive game.","farming":"Repeating a game activity (killing monsters, replaying a mission) to accumulate resources, experience or items.","speedrun":"The discipline of finishing a game as fast as possible, exploiting every shortcut and sometimes glitches, against the clock.","glitch":"A game bug repurposed by players to clip through walls, duplicate items or skip part of a level.","rng":"The randomness generated by the game (loot, critical hits, drops). 'Good RNG' means lucky, 'bad RNG' means unlucky.","pvp":"Player versus player: fights opposing real people, in duels or teams.","pve":"Player versus environment: you fight game-controlled enemies, alone or in co-op.","hud":"Interface shown on screen during the game: health, ammo, minimap. A good HUD informs without getting in the way.","ray tracing":"Rendering technique that simulates the real path of light for realistic reflections and shadows. Beautiful, but hardware-hungry.","dlss":"NVIDIA technology that uses AI to upscale a lower-resolution image to high definition: a big performance gain.","cloud gaming":"Playing by streaming games that run on remote servers, no install needed, like GeForce Now or Xbox Cloud Gaming.","remaster":"Improved version of an old game: modernized textures, resolution and comfort, but the same game underneath.","remake":"An old game rebuilt from scratch with current technology, like Resident Evil 4 or Final Fantasy VII Remake.","emulator":"Software that mimics a console on another device (PC, phone) to run its games. Legal, as long as you own the games.","rom":"Digital copy of a game (cartridge or disc) used by emulators. Downloading ROMs of games you don't own is illegal.","romhack":"Fan-made modified version of a retro game: new levels, translations, new difficulty.","homebrew":"Unofficial amateur app or game that runs on a console, usually once it has been unlocked.","custom firmware":"Modified operating system installed on a console to unlock it: it opens the door to homebrews but risks an online ban.","jailbreak":"Unlocking a console or device to bypass the manufacturer's restrictions and install unauthorized software.","backward compatibility":"A console's ability to run games from previous generations.","anticheat":"Protection software that detects and bans cheaters in online games, like Easy Anti-Cheat or BattlEye.","aimbot":"Cheat that aims automatically for the player in shooters. Getting caught means a ban.","crunch":"Period of intense overtime imposed on teams to ship a game on time, regularly denounced in the industry.","port":"Adapting a game to a different machine than the original one, e.g. a console game coming to PC.","exclusive":"A game available on a single platform, a major commercial weapon between PlayStation, Xbox and Nintendo.","game engine":"The software that runs the game: graphics, physics, sound. The best known are Unreal Engine and Unity.","open world":"Open-world game: one large map to explore freely, without forced corridors, like GTA or Zelda.","indie":"Independent game made by a small studio without a big publisher, often more original and cheaper than a AAA."},fr:{"fps":"Jeu de tir à la première personne (First-Person Shooter), où l’on voit à travers les yeux du personnage. Désigne aussi les images par seconde, qui mesurent la fluidité d’un jeu.","rpg":"Jeu de rôle : on incarne un personnage qui gagne de l’expérience, monte en niveau et s’équipe au fil d’une aventure souvent riche en histoire.","jrpg":"Jeu de rôle japonais, au style et à la narration typiques des productions nippones comme Final Fantasy ou Dragon Quest.","mmo":"Jeu massivement multijoueur en ligne, où des milliers de joueurs partagent le même monde persistant, comme World of Warcraft.","moba":"Arène de bataille en ligne où deux équipes de héros s’affrontent pour détruire la base adverse, comme League of Legends ou Dota 2.","battle royale":"Mode où des dizaines de joueurs s’affrontent sur une carte qui rétrécit, jusqu’au dernier survivant, comme Fortnite ou Warzone.","roguelike":"Jeu où l’on recommence de zéro à chaque mort, avec des niveaux générés aléatoirement : chaque partie est différente.","metroidvania":"Jeu d’exploration où de nouvelles capacités débloquent peu à peu des zones inaccessibles, dans la lignée de Metroid et Castlevania.","soulslike":"Jeu d’action exigeant inspiré de Dark Souls : combats punitifs, mort qui coûte cher, et grande satisfaction à progresser.","aaa":"Jeu à très gros budget produit par un grand studio, l’équivalent du blockbuster au cinéma.","dlc":"Contenu téléchargeable vendu après la sortie d’un jeu : nouvelles missions, personnages, cartes ou cosmétiques.","season pass":"Formule qui donne accès d’avance à plusieurs contenus futurs d’un jeu, généralement moins cher que de les acheter un par un.","battle pass":"Système de récompenses par paliers à débloquer en jouant pendant une saison, avec une piste gratuite et une piste payante.","free-to-play":"Jeu gratuit au téléchargement, qui se finance par les achats intégrés : cosmétiques, battle pass ou monnaie virtuelle.","pay-to-win":"Jeu où payer procure un avantage réel sur les autres joueurs, au-delà du simple cosmétique. Très mal vu par les joueurs.","microtransaction":"Petit achat en argent réel dans un jeu : skins, monnaie virtuelle, boosts. Le cœur du modèle économique des jeux gratuits.","lootbox":"Coffre au contenu aléatoire acheté avec de l’argent réel ou de la monnaie de jeu, critiqué pour sa proximité avec les jeux d’argent.","gacha":"Système de tirage aléatoire payant, hérité des jeux mobiles japonais, pour obtenir des personnages ou objets rares, comme dans Genshin Impact.","skin":"Objet purement cosmétique qui change l’apparence d’un personnage ou d’une arme sans modifier ses performances.","cross-play":"Possibilité de jouer ensemble en ligne depuis des machines différentes : PC, PlayStation, Xbox ou Switch.","crossplay":"Possibilité de jouer ensemble en ligne depuis des machines différentes : PC, PlayStation, Xbox ou Switch.","early access":"Jeu vendu avant d’être terminé : on y joue pendant son développement et il s’améliore au fil des mises à jour.","accès anticipé":"Jeu vendu avant d’être terminé : on y joue pendant son développement et il s’améliore au fil des mises à jour.","bêta":"Version de test d’un jeu, ouverte à tous ou sur invitation, qui sert à corriger bugs et serveurs avant la vraie sortie.","patch":"Mise à jour qui corrige des bugs, rééquilibre le jeu ou ajoute du contenu.","day one":"Se dit du jour de sortie d’un jeu. Le « patch day one » est la mise à jour à télécharger dès le lancement pour corriger les derniers problèmes.","nerf":"Affaiblissement volontaire d’une arme, d’un personnage ou d’une capacité jugés trop forts, via une mise à jour d’équilibrage.","buff":"Renforcement d’une arme, d’un personnage ou d’une capacité jugés trop faibles — l’inverse du nerf.","hitbox":"Zone invisible autour d’un personnage qui détermine ce qui compte comme une touche. Une hitbox mal réglée rend les combats injustes.","lag":"Décalage entre ton action et sa prise en compte par le jeu, causé par une connexion lente ou un serveur surchargé.","ping":"Temps en millisecondes que met un message à faire l’aller-retour vers le serveur. Plus il est bas, plus le jeu en ligne est réactif.","netcode":"Ensemble des techniques qui synchronisent une partie en ligne entre les joueurs. Un bon netcode masque le lag ; un mauvais fait rager.","matchmaking":"Système qui compose automatiquement les parties en ligne en réunissant des joueurs de niveau proche.","meta":"Ensemble des stratégies, armes ou personnages considérés comme les plus efficaces du moment dans un jeu compétitif.","farming":"Répéter une activité du jeu (tuer des monstres, refaire une mission) pour accumuler ressources, expérience ou objets.","speedrun":"Discipline qui consiste à finir un jeu le plus vite possible, en exploitant chaque raccourci et parfois des glitchs, chrono à l’appui.","glitch":"Bug du jeu détourné par les joueurs pour traverser un mur, dupliquer des objets ou sauter une partie du niveau.","rng":"Part de hasard générée par le jeu (butin, coups critiques, drops). « Bon RNG » = chanceux, « mauvais RNG » = malchanceux.","pvp":"Joueur contre joueur : les affrontements opposent de vraies personnes, en duel ou en équipes.","pve":"Joueur contre environnement : on affronte des ennemis contrôlés par le jeu, seul ou en coopération.","hud":"Interface affichée à l’écran pendant le jeu : vie, munitions, mini-carte. Un bon HUD informe sans gêner.","ray tracing":"Technique de rendu qui simule le trajet réel de la lumière pour des reflets et des ombres réalistes. Magnifique, mais gourmand en puissance.","dlss":"Technologie NVIDIA qui utilise l’IA pour afficher le jeu en haute définition à partir d’une image calculée en plus basse résolution : gros gain de performances.","cloud gaming":"Jouer en streaming à des jeux qui tournent sur des serveurs distants, sans installation, comme avec GeForce Now ou le cloud Xbox.","remaster":"Version améliorée d’un ancien jeu : textures, résolution et confort modernisés, mais le jeu reste le même.","remake":"Jeu ancien entièrement refait de zéro avec les technologies actuelles, comme Resident Evil 4 ou Final Fantasy VII Remake.","émulateur":"Logiciel qui imite une console sur un autre appareil (PC, téléphone) pour lancer ses jeux. Légal, tant qu’on possède les jeux originaux.","rom":"Copie numérique d’un jeu (cartouche ou disque) utilisée par les émulateurs. Télécharger des ROM de jeux qu’on ne possède pas est illégal.","romhack":"Version modifiée d’un jeu rétro créée par des fans : nouveaux niveaux, traductions, difficultés inédites.","homebrew":"Application ou jeu amateur non officiel qui tourne sur une console, généralement après l’avoir débridée.","custom firmware":"Système modifié installé sur une console pour la débrider : il ouvre la porte aux homebrews, mais expose au bannissement en ligne.","jailbreak":"Débridage d’une console ou d’un appareil pour contourner les restrictions du fabricant et installer des logiciels non autorisés.","rétrocompatibilité":"Capacité d’une console à faire tourner les jeux des générations précédentes.","anticheat":"Logiciel de protection qui détecte et bannit les tricheurs dans les jeux en ligne, comme Easy Anti-Cheat ou BattlEye.","aimbot":"Triche qui vise automatiquement à la place du joueur dans les jeux de tir. Sa détection entraîne un bannissement.","crunch":"Période de surtravail intense imposée aux équipes pour finir un jeu à temps, régulièrement dénoncée dans l’industrie.","portage":"Adaptation d’un jeu vers une autre machine que celle d’origine, par exemple un jeu console qui arrive sur PC.","exclusivité":"Jeu disponible sur une seule plateforme, arme commerciale majeure entre PlayStation, Xbox et Nintendo.","moteur de jeu":"Logiciel qui fait tourner le jeu : graphismes, physique, sons. Les plus connus sont l’Unreal Engine et Unity.","open world":"Jeu en monde ouvert : une grande carte explorable librement, sans couloirs imposés, comme dans GTA ou Zelda.","monde ouvert":"Grande carte explorable librement, sans couloirs imposés, comme dans GTA ou Breath of the Wild.","indé":"Jeu indépendant créé par un petit studio sans gros éditeur, souvent plus original et moins cher qu’un AAA."}};
+function glossDict(){return GLOSSARY[LANG]||GLOSSARY.en;}
+var GLOSS_KEYS=Object.keys(glossDict()).sort(function(a,b){return b.length-a.length;});
+var QUIZ={en:[{"q":"What is the best-selling console of all time?","options":["The PlayStation 2","The Wii","The Game Boy"],"correct":0,"explain":"The PS2 has sold around 160 million units since 2000 — a record the Switch is now chasing."},{"q":"Who created Mario?","options":["Hideo Kojima","Shigeru Miyamoto","Satoru Iwata"],"correct":1,"explain":"Shigeru Miyamoto created Mario, but also Zelda and Donkey Kong. He is Nintendo's most influential game designer."},{"q":"In which game does Mario first appear?","options":["Super Mario Bros.","Mario Kart","Donkey Kong (1981)"],"correct":2,"explain":"Mario debuts in 1981 in Donkey Kong under the name 'Jumpman', before getting his own series in 1985 with Super Mario Bros."},{"q":"What does 'RPG' stand for?","options":["Role-Playing Game","Real Player Game","Rapid Pixel Graphics"],"correct":0,"explain":"In an RPG you play a character who progresses: levels, gear, story choices. Examples: Final Fantasy, Baldur's Gate."},{"q":"Who owns the Steam store?","options":["Microsoft","Valve","Epic Games"],"correct":1,"explain":"Valve, the studio behind Half-Life and Counter-Strike, launched Steam in 2003. It is now the biggest PC game store."},{"q":"What is a speedrun?","options":["An extreme difficulty mode","A race in a driving game","Finishing a game as fast as possible, against the clock"],"correct":2,"explain":"Speedrunners optimize every second, sometimes using glitches. Records are verified and ranked by category on speedrun.com."},{"q":"What is an emulator?","options":["Software that mimics a console to run its games elsewhere","An anti-cheat program","An all-platform controller"],"correct":0,"explain":"An emulator reproduces a console's behavior on a PC or phone. The tool is legal; downloading games you don't own is not."},{"q":"What risk does a jailbroken / CFW console face when used online?","options":["Nothing at all","A permanent ban from online services","Just an email warning"],"correct":1,"explain":"Nintendo, Sony and Microsoft detect modified consoles and ban both the console and the account. Tinkerers keep a dedicated offline machine."},{"q":"What does 'free-to-play' (F2P) mean?","options":["A game you can play for free, funded by in-game purchases","A game bundled with a console","A free trial weekend"],"correct":0,"explain":"Fortnite, Warzone or League of Legends are free: skins, battle passes and virtual currencies make their money."},{"q":"What is SEGA's mascot?","options":["Pac-Man","Pikachu","Sonic"],"correct":2,"explain":"Sonic the hedgehog was born in 1991 to rival Mario, back when SEGA still made consoles like the Mega Drive."},{"q":"In the Zelda series, what is the hero's name?","options":["Link","Zelda","Ganon"],"correct":0,"explain":"Classic trap: Zelda is the princess, Ganon the villain. The hero in the green tunic is Link."},{"q":"What is a 'nerf' in a game?","options":["A display bug","The weakening of an overpowered weapon or character","A temporary XP bonus"],"correct":1,"explain":"When something dominates the meta, developers 'nerf' it with a balance patch. The opposite (buffing) is called a buff."},{"q":"What is cross-play?","options":["Playing two players on the same screen","Switching characters mid-match","Playing together from different platforms (PC, consoles)"],"correct":2,"explain":"Cross-play brings PC, PlayStation, Xbox and Switch players into the same matches, as in Fortnite or Rocket League."},{"q":"What is a ROM?","options":["The digital copy of a game, readable by an emulator","A spare console part","A memory card format"],"correct":0,"explain":"A ROM holds the game data extracted from the cartridge or disc. You may only legally use ones for games you own."},{"q":"What is NVIDIA's DLSS for?","options":["Cooling the graphics card","Gaining performance through AI upscaling","Blocking cheat software"],"correct":1,"explain":"The game is rendered at a lower resolution then upscaled by AI: nearly identical image, but many more frames per second. AMD's equivalent is FSR."},{"q":"What is the difference between a remake and a remaster?","options":["None, it's the same word","The remaster is always free","A remake is rebuilt from scratch, a remaster improves the original"],"correct":2,"explain":"A remaster polishes what exists (textures, resolution). A remake rebuilds the whole game with modern tech, like Resident Evil 4 (2023)."},{"q":"What is a roguelike?","options":["A game with randomly generated levels where death resets everything","A stealth game","An advanced photo mode"],"correct":0,"explain":"Every run is unique and death is permanent: Hades, Balatro and The Binding of Isaac are built on this principle."},{"q":"The Game Pass is the subscription service of...","options":["PlayStation","Xbox (Microsoft)","Nintendo"],"correct":1,"explain":"The Game Pass gives access to a game catalogue for a monthly fee, including Xbox exclusives on day one. Sony answers with PS Plus."},{"q":"What is RNG?","options":["A game's graphics engine","The world player ranking","The randomness generated by the game (loot, crits...)"],"correct":2,"explain":"RNG = Random Number Generator. It decides which loot drops or whether a hit crits — hence 'good' or 'bad' RNG."},{"q":"Who originally created Minecraft?","options":["Markus 'Notch' Persson","Electronic Arts","Ubisoft"],"correct":0,"explain":"Developed solo by Notch in 2009 then by his studio Mojang, Minecraft was bought by Microsoft in 2014 for $2.5 billion."},{"q":"What is a homebrew on console?","options":["An esports energy drink","An unofficial amateur app or game","An official texture pack"],"correct":1,"explain":"Homebrews are made by enthusiasts and run on unlocked consoles: emulators, utilities, original games."},{"q":"Hideo Kojima is the creator of...","options":["Metal Gear Solid and Death Stranding","Super Mario","FIFA"],"correct":0,"explain":"A Japanese video game legend, Kojima invented the modern stealth genre with Metal Gear before founding Kojima Productions."},{"q":"What is 'pay-to-win'?","options":["Earning money by playing","A paid-entry tournament","When paying gives a real advantage over other players"],"correct":2,"explain":"A game is pay-to-win when money buys power (weapons, stats), not just cosmetics. Players criticize it heavily."},{"q":"A hitbox is...","options":["The invisible zone that decides whether a hit lands","A collector's box","The settings menu"],"correct":0,"explain":"Every character or object has a collision zone. If it is bigger or smaller than the visual, hits feel unfair."},{"q":"What is esports?","options":["An official Olympic sport","Competitive video gaming, with pro teams and tournaments","A virtual-reality sports game"],"correct":1,"explain":"League of Legends, Counter-Strike and Rocket League have pro leagues, salaries, transfers and finals in stadiums."}],fr:[{"q":"Quelle est la console la plus vendue de l'histoire ?","options":["La PlayStation 2","La Wii","La Game Boy"],"correct":0,"explain":"La PS2 s'est écoulée à environ 160 millions d'exemplaires depuis 2000, un record que la Switch talonne aujourd'hui."},{"q":"Qui a créé Mario ?","options":["Hideo Kojima","Shigeru Miyamoto","Satoru Iwata"],"correct":1,"explain":"Shigeru Miyamoto a créé Mario, mais aussi Zelda et Donkey Kong. C'est le game designer le plus influent de l'histoire de Nintendo."},{"q":"Dans quel jeu Mario apparaît-il pour la première fois ?","options":["Super Mario Bros.","Mario Kart","Donkey Kong (1981)"],"correct":2,"explain":"Mario débute en 1981 dans Donkey Kong sous le nom de « Jumpman », avant d'avoir sa propre série en 1985 avec Super Mario Bros."},{"q":"Que signifie « RPG » ?","options":["Role-Playing Game, un jeu de rôle","Real Player Game","Rapid Pixel Graphics"],"correct":0,"explain":"Dans un RPG, on incarne un personnage qui progresse : niveaux, équipement, choix d'histoire. Exemples : Final Fantasy, Baldur's Gate."},{"q":"À qui appartient la boutique Steam ?","options":["Microsoft","Valve","Epic Games"],"correct":1,"explain":"Valve, le studio de Half-Life et Counter-Strike, a lancé Steam en 2003. C'est aujourd'hui la plus grande boutique de jeux PC."},{"q":"Qu'est-ce qu'un speedrun ?","options":["Un mode de difficulté extrême","Une course dans un jeu de voitures","Finir un jeu le plus vite possible, chrono en main"],"correct":2,"explain":"Les speedrunners optimisent chaque seconde, parfois à l'aide de glitchs. Les records sont vérifiés et classés par catégories sur speedrun.com."},{"q":"Qu'est-ce qu'un émulateur ?","options":["Un logiciel qui imite une console pour lancer ses jeux ailleurs","Un programme anti-triche","Une manette compatible toutes consoles"],"correct":0,"explain":"Un émulateur reproduit le fonctionnement d'une console sur PC ou téléphone. L'outil est légal ; télécharger des jeux qu'on ne possède pas ne l'est pas."},{"q":"Que risque une console débridée (jailbreak/CFW) utilisée en ligne ?","options":["Rien du tout","Un bannissement définitif des services en ligne","Juste un avertissement par e-mail"],"correct":1,"explain":"Nintendo, Sony et Microsoft détectent les consoles modifiées et bannissent console et compte. Les bidouilleurs gardent une machine dédiée hors ligne."},{"q":"Que signifie « free-to-play » (F2P) ?","options":["Un jeu jouable gratuitement, financé par les achats intégrés","Un jeu offert avec une console","Un week-end d'essai gratuit"],"correct":0,"explain":"Fortnite, Warzone ou League of Legends sont gratuits : skins, battle pass et monnaies virtuelles font leur chiffre d'affaires."},{"q":"Quelle est la mascotte de SEGA ?","options":["Pac-Man","Pikachu","Sonic"],"correct":2,"explain":"Sonic le hérisson est né en 1991 pour concurrencer Mario, à l'époque où SEGA fabriquait encore des consoles comme la Mega Drive."},{"q":"Dans la série Zelda, comment s'appelle le héros que l'on incarne ?","options":["Link","Zelda","Ganon"],"correct":0,"explain":"Piège classique : Zelda est la princesse, Ganon le méchant. Le héros en tunique verte s'appelle Link."},{"q":"Qu'est-ce qu'un « nerf » dans un jeu ?","options":["Un bug d'affichage","L'affaiblissement d'une arme ou d'un personnage trop forts","Un bonus d'expérience temporaire"],"correct":1,"explain":"Quand un élément domine la meta, les développeurs le « nerfent » via un patch d'équilibrage. L'inverse (renforcer) s'appelle un buff."},{"q":"Qu'est-ce que le cross-play ?","options":["Jouer à deux sur le même écran","Changer de personnage en pleine partie","Jouer ensemble depuis des plateformes différentes (PC, consoles)"],"correct":2,"explain":"Le cross-play réunit les joueurs PC, PlayStation, Xbox et Switch dans les mêmes parties, comme dans Fortnite ou Rocket League."},{"q":"Qu'est-ce qu'une ROM ?","options":["La copie numérique d'un jeu, lisible par un émulateur","Une pièce détachée de console","Un format de carte mémoire"],"correct":0,"explain":"La ROM contient les données du jeu extraites de la cartouche ou du disque. On ne peut légalement utiliser que celles de jeux qu'on possède."},{"q":"À quoi sert le DLSS de NVIDIA ?","options":["À refroidir la carte graphique","À gagner des performances grâce à l'upscaling par IA","À bloquer les logiciels de triche"],"correct":1,"explain":"Le jeu est calculé en résolution réduite puis agrandi par IA : image quasi identique, mais beaucoup plus d'images par seconde. AMD propose le FSR."},{"q":"Quelle est la différence entre un remake et un remaster ?","options":["Aucune, c'est le même mot","Le remaster est toujours gratuit","Le remake est refait de zéro, le remaster améliore l'original"],"correct":2,"explain":"Un remaster lisse l'existant (textures, résolution). Un remake reconstruit le jeu entier avec les technologies modernes, comme Resident Evil 4 (2023)."},{"q":"Qu'est-ce qu'un roguelike ?","options":["Un jeu à niveaux générés aléatoirement où la mort fait tout recommencer","Un jeu d'infiltration","Un mode photo avancé"],"correct":0,"explain":"Chaque partie est unique et la mort est permanente : Hades, Balatro ou The Binding of Isaac reposent sur ce principe."},{"q":"Le Game Pass est le service d'abonnement de...","options":["PlayStation","Xbox (Microsoft)","Nintendo"],"correct":1,"explain":"Le Game Pass donne accès à un catalogue de jeux contre un abonnement mensuel, avec les exclusivités Xbox dès leur sortie. Sony répond avec le PS Plus."},{"q":"Qu'est-ce que le RNG ?","options":["Le moteur graphique d'un jeu","Le classement mondial des joueurs","La part de hasard générée par le jeu (butin, critiques...)"],"correct":2,"explain":"RNG = Random Number Generator. C'est lui qui décide du butin qui tombe ou des coups critiques — d'où « bon » ou « mauvais » RNG."},{"q":"Qui a créé Minecraft à l'origine ?","options":["Markus « Notch » Persson","Electronic Arts","Ubisoft"],"correct":0,"explain":"Développé seul par Notch en 2009 puis par son studio Mojang, Minecraft a été racheté par Microsoft en 2014 pour 2,5 milliards de dollars."},{"q":"Qu'est-ce qu'un homebrew sur console ?","options":["Une boisson énergisante d'esport","Une application ou un jeu amateur non officiel","Un pack de textures officiel"],"correct":1,"explain":"Les homebrews sont créés par des passionnés et tournent sur des consoles débridées : émulateurs, utilitaires, jeux inédits."},{"q":"Hideo Kojima est le créateur de...","options":["Metal Gear Solid et Death Stranding","Super Mario","FIFA"],"correct":0,"explain":"Figure du jeu vidéo japonais, Kojima a inventé le genre infiltration moderne avec Metal Gear avant de fonder son propre studio, Kojima Productions."},{"q":"Qu'est-ce que le « pay-to-win » ?","options":["Gagner de l'argent en jouant","Un tournoi à inscription payante","Quand payer donne un avantage réel sur les autres joueurs"],"correct":2,"explain":"Un jeu est pay-to-win quand l'argent achète de la puissance (armes, stats) et pas seulement du cosmétique. C'est très critiqué par les joueurs."},{"q":"Une hitbox, c'est...","options":["La zone invisible qui détermine si un coup touche","Une boîte collector","Le menu des paramètres"],"correct":0,"explain":"Chaque personnage ou objet a une zone de collision. Si elle est plus grande ou plus petite que le visuel, les touches semblent injustes."},{"q":"Qu'est-ce que l'esport ?","options":["Un sport olympique officiel","La compétition de jeu vidéo, avec équipes pro et tournois","Un jeu de sport en réalité virtuelle"],"correct":1,"explain":"League of Legends, Counter-Strike ou Rocket League ont des ligues professionnelles, des salaires, des transferts et des finales dans des stades."}]};
 /* Hype keywords, bilingual on purpose (FR feeds are matched pre-translation). */
 var SEV={"big":["nintendo direct","state of play","playstation showcase","xbox games showcase","xbox showcase","summer game fest","the game awards","gamescom","acquisition","acquires","acquired","buyout","studio shutdown","shuts down","layoffs","lays off","bankruptcy","cancelled","canceled","delayed","massive leak","banwave","next-gen","next gen","ps6","switch successor","price increase","price hike","lawsuit","record sales","million copies sold","millions of players","rachat","acquisition","fermeture du studio","licenciement","faillite","annule","reporte","fuite massive","hausse de prix","proces","million d'exemplaires","millions de joueurs"],"mid":["release date","open beta","closed beta","early access","major update","patch notes","new expansion","dlc","season pass","crossplay","cross-play","demo available","free weekend","new trailer","gameplay reveal","system requirements","date de sortie","beta ouverte","beta fermee","acces anticipe","mise a jour majeure","nouveau trailer","gratuit ce week-end","configurations requises"]};
 
@@ -1057,9 +1171,10 @@ function severityOf(a){
 function updateHype(){
   var el=document.getElementById('hype');if(!el)return;
   var c=0;ALL.forEach(function(a){if(severityOf(a)===2)c++;});
-  var L=c>=6?{t:'Wild',c:'#fb7185'}:c>=3?{t:'Big day',c:'#fbbf24'}:c>=1?{t:'Buzzing',c:'#fbbf24'}:{t:'Quiet',c:'#34d399'};
+  var lv=I18N[LANG].levels;
+  var L=c>=6?{t:lv[6],c:'#fb7185'}:c>=3?{t:lv[3],c:'#fbbf24'}:c>=1?{t:lv[1],c:'#fbbf24'}:{t:lv[0],c:'#34d399'};
   el.style.display='inline-flex';
-  el.innerHTML='<span class="pip" style="background:'+L.c+'"></span>Hype level: <b style="color:'+L.c+'">'+L.t+'</b>'+(c?' ('+c+' big stor'+(c>1?'ies':'y')+')':'');
+  el.innerHTML='<span class="pip" style="background:'+L.c+'"></span>'+t('hypeLbl')+' <b style="color:'+L.c+'">'+L.t+'</b>'+(c?' ('+tp(c>1?'hypeN':'hype1',c)+')':'');
 }
 var VOTES=lsGet('gmd_votes',{});
 function voteSource(src,dir){VOTES[src]=(VOTES[src]||0)+dir;lsSet('gmd_votes',VOTES);}
@@ -1104,7 +1219,7 @@ function glossify(){
   });
 }
 function showGloss(el){
-  var t=el.getAttribute('data-t'),def=GLOSSARY[t];if(!def)return;
+  var t=el.getAttribute('data-t'),def=glossDict()[t];if(!def)return;
   var pop=document.getElementById('glpop');pop.innerHTML='<b>'+esc(t)+'</b><br>'+esc(def);
   var r=el.getBoundingClientRect();pop.style.display='block';
   var top=r.bottom+8,left=Math.min(r.left,window.innerWidth-310);
@@ -1119,7 +1234,7 @@ function enhanceReader(){
     var tl=makeTLDR(a);
     if(tl.length){
       var box=document.createElement('div');box.className='tldr';
-      box.innerHTML='<div class="tl">In short</div><ul>'+tl.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ul>';
+      box.innerHTML='<div class="tl">'+t('inShort')+'</div><ul>'+tl.map(function(s){return '<li>'+esc(s)+'</li>';}).join('')+'</ul>';
       var anchor=readerEl.querySelector('.rtime');
       if(anchor)anchor.parentNode.insertBefore(box,anchor.nextSibling);
     }
@@ -1154,7 +1269,7 @@ function shareArticle(a){
   if(!a)return;var text=a.title+' — '+a.link;
   if(window.AndroidBridge&&AndroidBridge.share){AndroidBridge.share(text);return;}
   if(navigator.share){navigator.share({title:a.title,url:a.link}).catch(function(){});return;}
-  try{navigator.clipboard.writeText(text);toast('Link copied');}catch(e){window.prompt('Copy this link:',a.link);}
+  try{navigator.clipboard.writeText(text);toast(t('linkCopied'));}catch(e){window.prompt(t('copyLink'),a.link);}
 }
 
 /* History / archives */
@@ -1169,12 +1284,12 @@ function saveHistory(){
 function openArchives(){
   var hist=lsGet('gmd_history',{});var keys=Object.keys(hist).sort().reverse();
   var m=document.getElementById('archModal'),body=document.getElementById('archBody');
-  if(!keys.length){body.innerHTML='<div style="color:var(--muted);padding:8px 0 4px">No history yet — come back tomorrow.</div>';}
+  if(!keys.length){body.innerHTML='<div style="color:var(--muted);padding:8px 0 4px">'+t('noHist')+'</div>';}
   else{
     body.innerHTML=keys.map(function(k){
-      var d=new Date(k+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',day:'numeric',month:'long'});
+      var d=new Date(k+'T12:00:00').toLocaleDateString(loc(),{weekday:'long',day:'numeric',month:'long'});
       var arts=hist[k];
-      return '<div class="archday"><div class="archdate">'+esc(d)+' · '+arts.length+' stories</div>'+
+      return '<div class="archday"><div class="archdate">'+esc(d)+' · '+tp(arts.length>1?'countN':'count1',arts.length)+'</div>'+
         arts.slice(0,12).map(function(a){return '<a class="archlink" href="'+esc(a.link)+'" target="_blank" rel="noopener">'+esc(a.title)+' <span>· '+esc(a.source)+'</span></a>';}).join('')+'</div>';
     }).join('');
   }
@@ -1183,15 +1298,16 @@ function openArchives(){
 
 /* Daily quiz */
 function renderQuiz(){
-  var el=document.getElementById('quiz');if(!el||!QUIZ.length)return;
+  var el=document.getElementById('quiz');if(!el||!QUIZ.en||!QUIZ.en.length)return;
   var start=new Date(new Date().getFullYear(),0,0);var day=Math.floor((new Date()-start)/86400000);
-  var qi=day%QUIZ.length,q=QUIZ[qi];
+  var ql=QUIZ[LANG]||QUIZ.en;
+  var qi=day%ql.length,q=ql[qi];
   var answered=lsGet('gmd_quiz_'+qi,null);
-  var h='<div class="lbl">Daily gaming quiz</div><div class="qq">'+esc(q.q)+'</div><div class="qopts">';
+  var h='<div class="lbl">'+t('quizLbl')+'</div><div class="qq">'+esc(q.q)+'</div><div class="qopts">';
   var letters=['A','B','C','D'];
   q.options.forEach(function(o,i){var cls='qopt';if(answered!=null){if(i===q.correct)cls+=' ok';else if(i===answered)cls+=' ko';}h+='<button class="'+cls+'" data-qi="'+i+'"'+(answered!=null?' disabled':'')+'><span class="k">'+letters[i]+'</span><span>'+esc(o)+'</span></button>';});
   h+='</div>';
-  if(answered!=null)h+='<div class="qexp">'+(answered===q.correct?'Correct. ':'Not quite. ')+esc(q.explain)+'</div>';
+  if(answered!=null)h+='<div class="qexp">'+(answered===q.correct?t('qOk'):t('qKo'))+esc(q.explain)+'</div>';
   el.innerHTML=h;el.style.display='block';el.setAttribute('data-qi',qi);el.setAttribute('data-correct',q.correct);el.setAttribute('data-exp',q.explain);
 }
 
@@ -1202,7 +1318,7 @@ function cmpVer(a,b){a=(''+a).split('.').map(Number);b=(''+b).split('.').map(Num
 function showUpdateBar(v){
   if(!(v&&v.version&&cmpVer(v.version,APP_VERSION)>0))return;
   var bar=document.getElementById('updateBar');if(!bar)return;
-  bar.innerHTML='<b>Version '+esc(v.version)+' is available</b> '+(v.notes?'— '+esc(v.notes):'')+' <a href="'+esc(v.apk||v.exe||v.url||'#')+'" target="_blank" rel="noopener">Download</a><button class="uc" onclick="this.parentNode.style.display=\'none\'" aria-label="Dismiss">✕</button>';
+  bar.innerHTML='<b>'+t('updAvail').replace('{v}',esc(v.version))+'</b> '+(v.notes?'— '+esc(v.notes):'')+' <a href="'+esc(v.apk||v.exe||v.url||'#')+'" target="_blank" rel="noopener">'+t('download')+'</a><button class="uc" onclick="this.parentNode.style.display=\'none\'" aria-label="'+t('dismiss')+'">✕</button>';
   bar.style.display='flex';
 }
 function checkUpdate(){
@@ -1215,6 +1331,7 @@ function checkUpdate(){
 }
 function initFeatures(){
   applyTheme();
+  applyLang();
   checkUpdate();
   renderQuiz();
   var tb=document.getElementById('themeBtn');if(tb)tb.addEventListener('click',toggleTheme);

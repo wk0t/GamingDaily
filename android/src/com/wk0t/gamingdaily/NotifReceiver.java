@@ -43,9 +43,10 @@ public class NotifReceiver extends BroadcastReceiver {
     public void onReceive(Context ctx, Intent intent) {
         NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
         if (nm == null) return;
+        boolean fr = "fr".equals(ctx.getSharedPreferences("app", Context.MODE_PRIVATE).getString("lang", "en"));
         if (Build.VERSION.SDK_INT >= 26) {
-            NotificationChannel ch = new NotificationChannel(CHANNEL, "Daily reminder", NotificationManager.IMPORTANCE_DEFAULT);
-            ch.setDescription("Lets you know each morning when your magazine is ready.");
+            NotificationChannel ch = new NotificationChannel(CHANNEL, fr ? "Rappel quotidien" : "Daily reminder", NotificationManager.IMPORTANCE_DEFAULT);
+            ch.setDescription(fr ? "Te prévient chaque matin que ton magazine est prêt." : "Lets you know each morning when your magazine is ready.");
             nm.createNotificationChannel(ch);
         }
         Intent open = new Intent(ctx, MainActivity.class);
@@ -59,7 +60,7 @@ public class NotifReceiver extends BroadcastReceiver {
         else b = new Notification.Builder(ctx);
         b.setSmallIcon(android.R.drawable.ic_dialog_info)
          .setContentTitle("Gaming Daily")
-         .setContentText("Your daily gaming magazine is ready!")
+         .setContentText(fr ? "Ton magazine jeu vidéo du jour est prêt !" : "Your daily gaming magazine is ready!")
          .setAutoCancel(true)
          .setContentIntent(pi);
         try { nm.notify(1, b.build()); } catch (Exception e) {}

@@ -5,8 +5,12 @@ and the project follows [semantic versioning](https://semver.org/).
 
 ## [1.1.0]
 
+### Added
+- Bilingual UI (EN/FR) with a language picker in Settings; feed translation, dates, text-to-speech and Android notifications follow the selected language. On PC, pass `-Lang fr` to the PowerShell script to generate the French edition directly.
+- FR variants of all content (tips, quiz, glossary) alongside the English ones.
+
 ### Changed
-- The whole app is now in English: UI, notifications, widget, code comments and docs.
+- The app defaults to English: UI, notifications, widget, code comments and docs.
 - Non-English (French) stories are translated to English on the fly instead of the other way around; text-to-speech and dates use English (en-US).
 - UI redesign: editorial "morning wire" layout (masthead with double rule, serif headlines, per-category colors), embedded fonts (Newsreader / Instrument Sans / JetBrains Mono), no gradients, no emojis.
 - The PC script (`GamingDaily.ps1`) now embeds the shared `android/assets/index.html` directly, so Windows, Android, Linux and iOS always render the exact same UI.
